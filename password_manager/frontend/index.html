@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Login ─────────────────────────────────────────────────────── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-card .logo { font-size: 2rem; margin-bottom: 1rem; }
+    .login-card h1 { font-size: 1.375rem; font-weight: 700; }
+    .login-card .subtitle { color: var(--text-muted); margin: .25rem 0 1.5rem; }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: .8125rem;
+      margin-top: .375rem;
+      display: none;
+    }
+
+    /* ── Forms ─────────────────────────────────────────────────────── */
+    .field { margin-bottom: 1rem; }
+    .field label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: .375rem;
+    }
+    .field input {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: .875rem;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .field input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 2.5rem; }
+    .eye-btn {
+      position: absolute;
+      right: .5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1;
+      padding: .2rem;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .375rem;
+      padding: .5rem 1rem;
+      border-radius: 7px;
+      font-size: .875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary  { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled)  { background: var(--primary-hover); }
+    .btn-ghost    { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled)    { background: var(--bg); }
+    .btn-danger   { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled)   { background: var(--danger-hover); }
+    .btn-icon     { padding: .375rem .5rem; font-size: .9rem; }
+    .btn-full     { width: 100%; justify-content: center; }
+
+    /* ── Dashboard layout ───────────────────────────────────────────── */
+    #dashboard { display: none; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .875rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+
+    .main-content { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+    .toolbar {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+    .search-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: .5rem .75rem .5rem 2.25rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: .875rem;
+      outline: none;
+      background: var(--surface);
+      transition: border-color .15s;
+    }
+    .search-wrap input:focus { border-color: var(--primary); }
+    .search-icon {
+      position: absolute;
+      left: .75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* ── Table ──────────────────────────────────────────────────────── */
+    .table-card {
+      background: var(--surface);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: #f8fafc;
+      padding: .625rem 1rem;
+      text-align: left;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody td {
+      padding: .875rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #f8fafc; }
+
+    .service-name { font-weight: 600; }
+    .url-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: .8125rem;
+      max-width: 200px;
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
+    }
+    .url-link:hover { text-decoration: underline; }
+    .dash { color: var(--text-muted); }
+
+    .senha-wrap { display: flex; align-items: center; gap: .375rem; }
+    .senha-val  { font-family: monospace; letter-spacing: .04em; }
+
+    .row-actions { display: flex; gap: .25rem; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+
+    /* ── Modal ──────────────────────────────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      padding: 1rem;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 460px;
+      animation: pop .2s ease;
+    }
+    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    .modal-header h2 { font-size: 1.0625rem; font-weight: 600; }
+    .close-btn { background: none; border: none; cursor: pointer; font-size: 1.125rem; color: var(--text-muted); padding: .25rem; }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.5rem; }
+
+    /* ── Toast ──────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: .75rem 1.25rem;
+      border-radius: 9px;
+      font-size: .875rem;
+      font-weight: 500;
+      color: #fff;
+      box-shadow: var(--shadow-md);
+      opacity: 0;
+      transform: translateY(.5rem);
+      transition: all .25s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+
+    /* ── Spinner ────────────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">🔐</div>
+    <h1>Password Manager</h1>
+    <p class="subtitle">Digite sua Chave Mestre para acessar</p>
+    <div class="field">
+      <label for="inp-key">Chave Mestre</label>
+      <div class="pass-wrap">
+        <input id="inp-key" type="password" placeholder="Cole sua chave Fernet aqui" autocomplete="off">
+        <button class="eye-btn" onclick="toggleEye('inp-key', this)">👁</button>
+      </div>
+    </div>
+    <p id="login-error" class="error-msg">Chave inválida ou arquivo corrompido.</p>
+    <button id="unlock-btn" class="btn btn-primary btn-full" onclick="unlock()">Desbloquear</button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ───────────────────────────────────────────────────────── -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-title">🔐 Password Manager</div>
+    <button class="btn btn-ghost" onclick="logout()">🔒 Bloquear</button>
+  </div>
+  <div class="main-content">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearch(this.value)">
+      </div>
+      <button class="btn btn-primary" onclick="openModal()">+ Adicionar</button>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>URL</th>
+            <th>E-mail / Usuário</th>
+            <th>Senha</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="creds-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ADD/EDIT ──────────────────────────────────────────────────── -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Adicionar Credencial</h2>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="field"><label>Serviço *</label><input id="f-nome" type="text" placeholder="Github"></div>
+    <div class="field"><label>URL</label><input id="f-url" type="text" placeholder="https://github.com"></div>
+    <div class="field"><label>E-mail ou Usuário *</label><input id="f-email" type="text" placeholder="voce@email.com" autocomplete="off"></div>
+    <div class="field">
+      <label>Senha *</label>
+      <div class="pass-wrap">
+        <input id="f-senha" type="password" placeholder="Senha" autocomplete="new-password">
+        <button class="eye-btn" onclick="toggleEye('f-senha', this)">👁</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button id="save-btn" class="btn btn-primary" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ── SCRIPT ──────────────────────────────────────────────────────────── -->
+<script>
+  let masterKey = '';
+  let creds = [];          // cache local
+  let editTarget = null;   // { nome, email } da credencial em edição
+  let searchTimer = null;
+
+  // ── API ────────────────────────────────────────────────────────────────
+  function req(method, path, body) {
+    return fetch(path, {
+      method,
+      headers: {
+        'x-master-key': masterKey,
+        ...(body ? { 'content-type': 'application/json' } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  }
+
+  // ── Auth ───────────────────────────────────────────────────────────────
+  async function unlock() {
+    const key = document.getElementById('inp-key').value.trim();
+    if (!key) return;
+
+    const btn = document.getElementById('unlock-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Verificando…';
+    masterKey = key;
+
+    try {
+      const r = await req('GET', '/credenciais/');
+      if (r.ok) {
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        renderCreds(await r.json());
+      } else {
+        masterKey = '';
+        document.getElementById('login-error').style.display = 'block';
+      }
+    } catch {
+      masterKey = '';
+      document.getElementById('login-error').textContent = 'Não foi possível conectar à API. Certifique-se de que pm-api está rodando.';
+      document.getElementById('login-error').style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Desbloquear';
+    }
+  }
+
+  function logout() {
+    masterKey = '';
+    creds = [];
+    document.getElementById('inp-key').value = '';
+    document.getElementById('inp-search').value = '';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+
+  // ── Load / Search ──────────────────────────────────────────────────────
+  async function loadAll() {
+    const r = await req('GET', '/credenciais/');
+    if (r.ok) renderCreds(await r.json());
+  }
+
+  function onSearch(valor) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+      const t = valor.trim();
+      const path = t ? `/credenciais/buscar?termo=${encodeURIComponent(t)}` : '/credenciais/';
+      const r = await req('GET', path);
+      if (r.ok) renderCreds(await r.json());
+    }, 280);
+  }
+
+  // ── CRUD ───────────────────────────────────────────────────────────────
+  async function salvar() {
+    const nome  = document.getElementById('f-nome').value.trim();
+    const url   = document.getElementById('f-url').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const senha = document.getElementById('f-senha').value;
+
+    if (!nome || !email || !senha) {
+      toast('Serviço, e-mail e senha são obrigatórios.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      const r = editTarget
+        ? await req('PATCH', '/credenciais/', { nome_atual: editTarget.nome, email_atual: editTarget.email, nome, url, email, senha })
+        : await req('POST',  '/credenciais/', { nome, url, email, senha });
+
+      if (r.ok) {
+        closeModal();
+        toast(editTarget ? 'Credencial atualizada.' : 'Credencial adicionada.', 'success');
+        document.getElementById('inp-search').value = '';
+        await loadAll();
+      } else {
+        const err = await r.json();
+        toast(err.detail || 'Erro ao salvar.', 'error');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salvar';
+    }
+  }
+
+  async function remover(idx) {
+    const c = creds[idx];
+    if (!confirm(`Remover "${c.nome}" (${c.email})?`)) return;
+    const r = await req('DELETE', `/credenciais/?nome=${encodeURIComponent(c.nome)}&email=${encodeURIComponent(c.email)}`);
+    if (r.ok) {
+      toast('Credencial removida.', 'success');
+      await loadAll();
+    } else {
+      toast('Erro ao remover.', 'error');
+    }
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────────────
+  function openModal(idx = null) {
+    const c = idx !== null ? creds[idx] : null;
+    editTarget = c ? { nome: c.nome, email: c.email } : null;
+    document.getElementById('modal-title').textContent = c ? 'Editar Credencial' : 'Adicionar Credencial';
+    document.getElementById('f-nome').value  = c?.nome  ?? '';
+    document.getElementById('f-url').value   = c?.url   ?? '';
+    document.getElementById('f-email').value = c?.email ?? '';
+    document.getElementById('f-senha').value = c?.senha ?? '';
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('f-nome').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    editTarget = null;
+  }
+
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  function renderCreds(list) {
+    creds = list;
+    const tbody = document.getElementById('creds-body');
+
+    if (!list.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <div class="empty-icon">🔎</div>
+            <div>Nenhuma credencial encontrada.</div>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map((c, i) => `
+      <tr>
+        <td><span class="service-name">${esc(c.nome)}</span></td>
+        <td>
+          ${c.url
+            ? `<a class="url-link" href="${esc(c.url)}" target="_blank" title="${esc(c.url)}">${esc(c.url)}</a>`
+            : `<span class="dash">—</span>`}
+        </td>
+        <td>${esc(c.email)}</td>
+        <td>
+          <div class="senha-wrap">
+            <span class="senha-val" data-val="${esc(c.senha)}" data-visible="false">••••••••</span>
+            <button class="btn btn-ghost btn-icon" title="Mostrar/Ocultar" onclick="toggleSenha(this)">👁</button>
+            <button class="btn btn-ghost btn-icon" title="Copiar senha" onclick="copiar(this, ${i})">📋</button>
+          </div>
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-icon" title="Editar" onclick="openModal(${i})">✏️</button>
+            <button class="btn btn-danger btn-icon" title="Remover" onclick="remover(${i})">🗑️</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  // ── UI helpers ─────────────────────────────────────────────────────────
+  function toggleSenha(btn) {
+    const span = btn.closest('.senha-wrap').querySelector('.senha-val');
+    const visible = span.dataset.visible === 'true';
+    span.textContent = visible ? '••••••••' : span.dataset.val;
+    span.dataset.visible = visible ? 'false' : 'true';
+    btn.textContent = visible ? '👁' : '🙈';
+  }
+
+  async function copiar(btn, idx) {
+    await navigator.clipboard.writeText(creds[idx].senha);
+    const orig = btn.textContent;
+    btn.textContent = '✅';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }
+
+  function toggleEye(id, btn) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+    btn.textContent = el.type === 'password' ? '👁' : '🙈';
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => (
+      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
+  }
+
+  let toastTimer;
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type} visible`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
+  }
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  document.getElementById('inp-key').addEventListener('keydown', e => {
+    if (e.key === 'Enter') unlock();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+</body>
+</html>
