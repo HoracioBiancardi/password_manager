@@ -109,11 +109,12 @@ def adicionar(
     url: str = typer.prompt("URL do Serviço (Enter para pular)", default="")
     email: str = typer.prompt("E-mail ou Usuário")
     senha: str = typer.prompt("Senha", hide_input=True, confirmation_prompt=True)
+    observacao: str = typer.prompt("Observação (Enter para pular)", default="")
     chave_mestre: str = _obter_chave_mestre()
 
     try:
         servico: PasswordManagerService = _criar_servico(chave_mestre, arquivo)
-        servico.adicionar_credencial(Credencial(nome=nome, url=url, email=email, senha=senha))
+        servico.adicionar_credencial(Credencial(nome=nome, url=url, email=email, senha=senha, observacao=observacao))
         console.print(f"\n[green]✓[/green] Credencial '[bold]{nome}[/bold]' adicionada com sucesso.\n")
     except ChaveMestreInvalidaError as exc:
         console.print(f"\n[bold red]✗ Erro:[/bold red] {exc}\n")
@@ -147,8 +148,9 @@ def buscar(
     tabela.add_column("URL", style="blue")
     tabela.add_column("E-mail/Usuário", style="magenta")
     tabela.add_column("Senha", style="green")
+    tabela.add_column("Observação", style="white")
     for cred in resultados:
-        tabela.add_row(cred.nome, cred.url, cred.email, cred.senha)
+        tabela.add_row(cred.nome, cred.url, cred.email, cred.senha, cred.observacao)
 
     console.print()
     console.print(tabela)
@@ -201,13 +203,14 @@ def atualizar(
     novo_nome: str = typer.prompt("Serviço", default=alvo.nome)
     nova_url: str = typer.prompt("URL do Serviço", default=alvo.url)
     novo_email: str = typer.prompt("E-mail ou Usuário", default=alvo.email)
+    nova_observacao: str = typer.prompt("Observação", default=alvo.observacao)
 
     if typer.confirm("Alterar senha?", default=False):
         nova_senha: str = typer.prompt("Nova Senha", hide_input=True, confirmation_prompt=True)
     else:
         nova_senha = alvo.senha
 
-    nova = Credencial(nome=novo_nome, url=nova_url, email=novo_email, senha=nova_senha)
+    nova = Credencial(nome=novo_nome, url=nova_url, email=novo_email, senha=nova_senha, observacao=nova_observacao)
 
     if servico.atualizar_credencial(alvo.nome, alvo.email, nova):
         console.print(f"\n[green]✓[/green] Credencial '[bold]{novo_nome}[/bold]' atualizada.\n")

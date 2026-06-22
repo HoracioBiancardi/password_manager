@@ -72,6 +72,7 @@ def atualizar(
         url=payload.url if payload.url is not None else alvo.url,
         email=payload.email if payload.email is not None else alvo.email,
         senha=payload.senha if payload.senha is not None else alvo.senha,
+        observacao=payload.observacao if payload.observacao is not None else alvo.observacao,
     )
 
     try:

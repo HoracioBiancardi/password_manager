@@ -10,6 +10,7 @@ class CredencialIn(BaseModel):
     url: str = ""
     email: str
     senha: str
+    observacao: str = ""
 
 
 class CredencialOut(BaseModel):
@@ -19,6 +20,7 @@ class CredencialOut(BaseModel):
     url: str
     email: str
     senha: str
+    observacao: str = ""
 
 
 class AtualizarIn(BaseModel):
@@ -31,6 +33,7 @@ class AtualizarIn(BaseModel):
         url: Nova URL. None mantém o valor atual.
         email: Novo e-mail. None mantém o valor atual.
         senha: Nova senha. None mantém o valor atual.
+        observacao: Nova observação. None mantém o valor atual.
     """
 
     nome_atual: str
@@ -39,3 +42,4 @@ class AtualizarIn(BaseModel):
     url: str | None = None
     email: str | None = None
     senha: str | None = None
+    observacao: str | None = None

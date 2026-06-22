@@ -214,6 +214,36 @@
     .senha-wrap { display: flex; align-items: center; gap: .375rem; }
     .senha-val  { font-family: monospace; letter-spacing: .04em; }
 
+    .obs-cell { max-width: 200px; }
+    .obs-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-size: .8125rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .field textarea {
+      width: 100%;
+      padding: .5rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: .875rem;
+      outline: none;
+      resize: vertical;
+      min-height: 72px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+
     .row-actions { display: flex; gap: .25rem; }
 
     .empty-state {
@@ -329,6 +359,7 @@
             <th>URL</th>
             <th>E-mail / Usuário</th>
             <th>Senha</th>
+            <th>Observação</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -355,6 +386,7 @@
         <button class="eye-btn" onclick="toggleEye('f-senha', this)">👁</button>
       </div>
     </div>
+    <div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Notas, dicas de recuperação, contexto…"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
       <button id="save-btn" class="btn btn-primary" onclick="salvar()">Salvar</button>
@@ -441,10 +473,11 @@
 
   // ── CRUD ───────────────────────────────────────────────────────────────
   async function salvar() {
-    const nome  = document.getElementById('f-nome').value.trim();
-    const url   = document.getElementById('f-url').value.trim();
-    const email = document.getElementById('f-email').value.trim();
-    const senha = document.getElementById('f-senha').value;
+    const nome       = document.getElementById('f-nome').value.trim();
+    const url        = document.getElementById('f-url').value.trim();
+    const email      = document.getElementById('f-email').value.trim();
+    const senha      = document.getElementById('f-senha').value;
+    const observacao = document.getElementById('f-obs').value.trim();
 
     if (!nome || !email || !senha) {
       toast('Serviço, e-mail e senha são obrigatórios.', 'error');
@@ -457,8 +490,8 @@
 
     try {
       const r = editTarget
-        ? await req('PATCH', '/credenciais/', { nome_atual: editTarget.nome, email_atual: editTarget.email, nome, url, email, senha })
-        : await req('POST',  '/credenciais/', { nome, url, email, senha });
+        ? await req('PATCH', '/credenciais/', { nome_atual: editTarget.nome, email_atual: editTarget.email, nome, url, email, senha, observacao })
+        : await req('POST',  '/credenciais/', { nome, url, email, senha, observacao });
 
       if (r.ok) {
         closeModal();
@@ -492,10 +525,11 @@
     const c = idx !== null ? creds[idx] : null;
     editTarget = c ? { nome: c.nome, email: c.email } : null;
     document.getElementById('modal-title').textContent = c ? 'Editar Credencial' : 'Adicionar Credencial';
-    document.getElementById('f-nome').value  = c?.nome  ?? '';
-    document.getElementById('f-url').value   = c?.url   ?? '';
-    document.getElementById('f-email').value = c?.email ?? '';
-    document.getElementById('f-senha').value = c?.senha ?? '';
+    document.getElementById('f-nome').value  = c?.nome       ?? '';
+    document.getElementById('f-url').value   = c?.url        ?? '';
+    document.getElementById('f-email').value = c?.email      ?? '';
+    document.getElementById('f-senha').value = c?.senha      ?? '';
+    document.getElementById('f-obs').value   = c?.observacao ?? '';
     document.getElementById('overlay').classList.add('open');
     document.getElementById('f-nome').focus();
   }
@@ -516,7 +550,7 @@
 
     if (!list.length) {
       tbody.innerHTML = `
-        <tr><td colspan="5">
+        <tr><td colspan="6">
           <div class="empty-state">
             <div class="empty-icon">🔎</div>
             <div>Nenhuma credencial encontrada.</div>
@@ -540,6 +574,11 @@
             <button class="btn btn-ghost btn-icon" title="Mostrar/Ocultar" onclick="toggleSenha(this)">👁</button>
             <button class="btn btn-ghost btn-icon" title="Copiar senha" onclick="copiar(this, ${i})">📋</button>
           </div>
+        </td>
+        <td class="obs-cell">
+          ${c.observacao
+            ? `<span class="obs-text" title="${esc(c.observacao)}">${esc(c.observacao)}</span>`
+            : `<span class="dash">—</span>`}
         </td>
         <td>
           <div class="row-actions">
