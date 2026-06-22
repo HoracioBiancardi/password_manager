@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CAMINHO_ENV: Path = Path(".password-manager") / ".env"
 CAMINHO_STORAGE_PADRAO: Path = Path(".password-manager") / "senhas.enc"
+CAMINHO_NOTAS_PADRAO: Path = Path(".password-manager") / "notas.enc"
 
 
 class Settings(BaseSettings):
@@ -23,3 +24,4 @@ class Settings(BaseSettings):
 
     master_key: str | None = None
     storage_path: Path = CAMINHO_STORAGE_PADRAO
+    notas_path: Path = CAMINHO_NOTAS_PADRAO

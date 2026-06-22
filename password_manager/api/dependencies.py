@@ -5,8 +5,24 @@ from fastapi import Header, HTTPException
 from password_manager.config import Settings
 from password_manager.crypto.crypto_service import CryptoService
 from password_manager.exceptions import ChaveMestreInvalidaError
+from password_manager.services.notas_service import NotasService
 from password_manager.services.password_manager_service import PasswordManagerService
 from password_manager.storage.file_storage import FileStorage
+
+
+def get_notas_servico(
+    x_master_key: str = Header(..., description="Chave Mestre Fernet"),
+) -> NotasService:
+    settings = Settings()
+    notas_path = settings.notas_path
+    notas_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        return NotasService(
+            crypto=CryptoService(x_master_key),
+            storage=FileStorage(notas_path),
+        )
+    except ChaveMestreInvalidaError:
+        raise HTTPException(status_code=401, detail="Chave Mestre inválida.")
 
 
 def get_servico(

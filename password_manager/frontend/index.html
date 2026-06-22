@@ -8,18 +8,23 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f1f5f9;
-      --surface: #ffffff;
+      --bg: #050b18;
+      --glass: rgba(12, 22, 48, 0.72);
+      --glass-alt: rgba(8, 16, 36, 0.55);
+      --glass-input: rgba(6, 14, 32, 0.6);
       --primary: #3b82f6;
       --primary-hover: #2563eb;
+      --primary-glow: rgba(59, 130, 246, 0.35);
       --danger: #ef4444;
       --danger-hover: #dc2626;
       --success: #10b981;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+      --text: #e2e8f0;
+      --text-muted: #8ba3c7;
+      --border: rgba(99, 155, 255, 0.13);
+      --border-bright: rgba(99, 155, 255, 0.28);
+      --shadow: 0 4px 24px rgba(0,0,0,.5);
+      --shadow-md: 0 8px 40px rgba(0,0,0,.65);
+      --glow-ring: 0 0 0 3px rgba(59,130,246,.18);
     }
 
     body {
@@ -28,334 +33,264 @@
       color: var(--text);
       min-height: 100vh;
       font-size: 14px;
+      overflow-x: hidden;
     }
 
-    /* ── Login ─────────────────────────────────────────────────────── */
+    /* ── Background ─────────────────────────────────────────────────── */
+    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .45; animation: drift linear infinite; }
+    .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #1d4ed8 0%, transparent 70%); top: -15%; left: -10%; animation-duration: 22s; }
+    .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, #6d28d9 0%, transparent 70%); bottom: -10%; right: -5%; animation-duration: 28s; animation-direction: reverse; }
+    .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, #0e7490 0%, transparent 70%); top: 40%; left: 50%; animation-duration: 18s; }
+    .orb-4 { width: 350px; height: 350px; background: radial-gradient(circle, #be185d 0%, transparent 70%); top: 10%; right: 20%; animation-duration: 32s; animation-direction: reverse; opacity: .25; }
+    @keyframes drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(40px, -30px) scale(1.07); }
+      66%  { transform: translate(-25px, 45px) scale(.95); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+
+    /* ── Glass ──────────────────────────────────────────────────────── */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    /* ── Login ──────────────────────────────────────────────────────── */
     #login-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
       min-height: 100vh;
     }
+    .login-card { border-radius: 20px; padding: 2.75rem; width: 100%; max-width: 420px; animation: fadeUp .6s cubic-bezier(.16,1,.3,1) both; }
+    .login-brand { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.75rem; }
+    .login-brand .icon { width: 46px; height: 46px; background: linear-gradient(135deg, #3b82f6, #6d28d9); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.375rem; box-shadow: 0 4px 16px rgba(59,130,246,.4); }
+    .login-brand h1 { font-size: 1.375rem; font-weight: 700; }
+    .login-brand .subtitle { font-size: .8125rem; color: var(--text-muted); margin-top: .1rem; }
+    .divider { height: 1px; background: var(--border); margin-bottom: 1.5rem; }
+    .error-msg { color: var(--danger); font-size: .8125rem; margin-top: .375rem; margin-bottom: .75rem; display: none; padding: .5rem .75rem; background: rgba(239,68,68,.1); border-radius: 7px; border: 1px solid rgba(239,68,68,.25); }
 
-    .login-card {
-      background: var(--surface);
-      border-radius: 14px;
-      box-shadow: var(--shadow-md);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .login-card .logo { font-size: 2rem; margin-bottom: 1rem; }
-    .login-card h1 { font-size: 1.375rem; font-weight: 700; }
-    .login-card .subtitle { color: var(--text-muted); margin: .25rem 0 1.5rem; }
-
-    .error-msg {
-      color: var(--danger);
-      font-size: .8125rem;
-      margin-top: .375rem;
-      display: none;
-    }
-
-    /* ── Forms ─────────────────────────────────────────────────────── */
+    /* ── Forms ──────────────────────────────────────────────────────── */
     .field { margin-bottom: 1rem; }
-    .field label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: .375rem;
+    .field label { display: block; font-weight: 500; font-size: .8125rem; margin-bottom: .4rem; color: var(--text-muted); letter-spacing: .02em; text-transform: uppercase; }
+    .field input, .field textarea {
+      width: 100%; padding: .6rem .875rem;
+      border: 1px solid var(--border); border-radius: 9px;
+      font-size: .875rem; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      background: var(--glass-input); color: var(--text); font-family: inherit;
     }
-    .field input {
-      width: 100%;
-      padding: .5rem .75rem;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: .875rem;
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
-      background: var(--surface);
-      color: var(--text);
-    }
-    .field input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-    }
-
+    .field input::placeholder, .field textarea::placeholder { color: rgba(139,163,199,.5); }
+    .field input:focus, .field textarea:focus { border-color: var(--primary); box-shadow: var(--glow-ring); animation: focusPulse .25s ease; }
+    .field textarea { resize: vertical; min-height: 72px; }
     .pass-wrap { position: relative; }
-    .pass-wrap input { padding-right: 2.5rem; }
-    .eye-btn {
-      position: absolute;
-      right: .5rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1;
-      padding: .2rem;
-    }
+    .pass-wrap input { padding-right: 2.75rem; }
+    .eye-btn { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; line-height: 1; padding: .25rem; transition: color .15s; }
+    .eye-btn:hover { color: var(--text); }
 
     /* ── Buttons ────────────────────────────────────────────────────── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .375rem;
-      padding: .5rem 1rem;
-      border-radius: 7px;
-      font-size: .875rem;
-      font-weight: 500;
-      border: none;
-      cursor: pointer;
-      transition: background .15s, opacity .15s;
-      white-space: nowrap;
-    }
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.1rem; border-radius: 9px; font-size: .875rem; font-weight: 500; border: none; cursor: pointer; transition: background .15s, box-shadow .2s, transform .1s; white-space: nowrap; }
     .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-primary  { background: var(--primary); color: #fff; }
-    .btn-primary:hover:not(:disabled)  { background: var(--primary-hover); }
-    .btn-ghost    { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
-    .btn-ghost:hover:not(:disabled)    { background: var(--bg); }
-    .btn-danger   { background: var(--danger); color: #fff; }
-    .btn-danger:hover:not(:disabled)   { background: var(--danger-hover); }
-    .btn-icon     { padding: .375rem .5rem; font-size: .9rem; }
-    .btn-full     { width: 100%; justify-content: center; }
+    .btn:active:not(:disabled) { transform: scale(.96); }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,.3); position: relative; overflow: hidden; }
+    .btn-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.2) 50%, transparent 60%); background-size: 200% 100%; opacity: 0; transition: opacity .2s; }
+    .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 24px rgba(59,130,246,.5); }
+    .btn-primary:hover:not(:disabled)::after { opacity: 1; animation: shimmer .7s linear; }
+    .btn-ghost { background: rgba(255,255,255,.05); color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.09); color: var(--text); border-color: var(--border-bright); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,.3); }
+    .btn-danger:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(239,68,68,.45); }
+    .btn-icon { padding: .4rem .55rem; font-size: .9rem; }
+    .btn-full { width: 100%; justify-content: center; }
 
-    /* ── Dashboard layout ───────────────────────────────────────────── */
-    #dashboard { display: none; }
+    /* ── Dashboard ──────────────────────────────────────────────────── */
+    #dashboard { display: none; position: relative; z-index: 1; }
+    #dashboard.entering { animation: fadeIn .4s ease both; }
 
     .topbar {
-      background: var(--surface);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      background: rgba(5, 11, 30, 0.8);
       border-bottom: 1px solid var(--border);
-      padding: .875rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      padding: .9rem 1.75rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+      animation: slideDown .45s cubic-bezier(.16,1,.3,1) both;
     }
-    .topbar-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+    .topbar-brand { display: flex; align-items: center; gap: .6rem; }
+    .topbar-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #6d28d9); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .topbar-title { font-size: 1rem; font-weight: 700; }
 
-    .main-content { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
-
-    .toolbar {
+    /* ── Tabs ───────────────────────────────────────────────────────── */
+    .tabs {
       display: flex;
-      gap: .75rem;
-      margin-bottom: 1.25rem;
+      gap: 0;
+      padding: 0 1.75rem;
+      background: rgba(5, 11, 30, 0.6);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
     }
-    .search-wrap {
-      flex: 1;
-      position: relative;
+    .tab-btn {
+      display: flex; align-items: center; gap: .45rem;
+      padding: .8rem 1.25rem;
+      font-size: .875rem; font-weight: 500;
+      color: var(--text-muted);
+      background: none; border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+      margin-bottom: -1px;
     }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-btn .tab-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px;
+      padding: 0 5px;
+      background: rgba(59,130,246,.2);
+      color: #60a5fa;
+      border-radius: 99px;
+      font-size: .7rem; font-weight: 600;
+    }
+    .tab-btn.active .tab-badge { background: rgba(59,130,246,.35); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .main-content { padding: 1.75rem; max-width: 1200px; margin: 0 auto; }
+
+    .toolbar { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
+    .search-wrap { flex: 1; position: relative; }
     .search-wrap input {
-      width: 100%;
-      padding: .5rem .75rem .5rem 2.25rem;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: .875rem;
-      outline: none;
-      background: var(--surface);
-      transition: border-color .15s;
+      width: 100%; padding: .6rem .875rem .6rem 2.5rem;
+      border: 1px solid var(--border); border-radius: 9px;
+      font-size: .875rem; outline: none;
+      background: var(--glass); backdrop-filter: blur(12px);
+      color: var(--text); transition: border-color .2s, box-shadow .2s;
     }
-    .search-wrap input:focus { border-color: var(--primary); }
-    .search-icon {
-      position: absolute;
-      left: .75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-      pointer-events: none;
-    }
+    .search-wrap input::placeholder { color: rgba(139,163,199,.5); }
+    .search-wrap input:focus { border-color: var(--primary); box-shadow: var(--glow-ring); }
+    .search-icon { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: .9rem; }
 
-    /* ── Table ──────────────────────────────────────────────────────── */
-    .table-card {
-      background: var(--surface);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
+    /* ── Passwords table ────────────────────────────────────────────── */
+    .table-card { border-radius: 14px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
-    thead th {
-      background: #f8fafc;
-      padding: .625rem 1rem;
-      text-align: left;
-      font-size: .7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-    tbody td {
-      padding: .875rem 1rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+    thead th { background: var(--glass-alt); backdrop-filter: blur(12px); padding: .7rem 1rem; text-align: left; font-size: .675rem; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+    tbody td { padding: .9rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--glass); backdrop-filter: blur(20px); transition: background .15s; }
     tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: #f8fafc; }
-
+    tbody tr:hover td { background: rgba(59,130,246,.06); }
+    tbody tr { animation: fadeUp .3s cubic-bezier(.16,1,.3,1) both; }
     .service-name { font-weight: 600; }
-    .url-link {
-      color: var(--primary);
-      text-decoration: none;
-      font-size: .8125rem;
-      max-width: 200px;
-      display: inline-block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      vertical-align: bottom;
-    }
-    .url-link:hover { text-decoration: underline; }
-    .dash { color: var(--text-muted); }
-
+    .url-link { color: #60a5fa; text-decoration: none; font-size: .8125rem; max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .url-link:hover { color: #93c5fd; text-decoration: underline; }
+    .dash { color: rgba(139,163,199,.4); }
     .senha-wrap { display: flex; align-items: center; gap: .375rem; }
-    .senha-val  { font-family: monospace; letter-spacing: .04em; }
-
+    .senha-val { font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: .05em; font-size: .82rem; }
     .obs-cell { max-width: 200px; }
-    .obs-text {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      font-size: .8125rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-    .field textarea {
-      width: 100%;
-      padding: .5rem .75rem;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      font-size: .875rem;
-      outline: none;
-      resize: vertical;
-      min-height: 72px;
-      font-family: inherit;
-      color: var(--text);
-      background: var(--surface);
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .field textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-    }
-
+    .obs-text { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .8125rem; color: var(--text-muted); line-height: 1.4; }
     .row-actions { display: flex; gap: .25rem; }
 
     /* ── Pagination ─────────────────────────────────────────────────── */
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .75rem 1rem;
-      border-top: 1px solid var(--border);
-      background: #f8fafc;
-    }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--border); background: var(--glass-alt); backdrop-filter: blur(12px); }
     .pagination-info { font-size: .8125rem; color: var(--text-muted); }
     .pagination-controls { display: flex; gap: .25rem; align-items: center; }
-    .page-btn {
-      min-width: 2rem;
-      height: 2rem;
-      padding: 0 .5rem;
-      border-radius: 6px;
-      font-size: .8125rem;
-      font-weight: 500;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
-      transition: background .15s, border-color .15s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .page-btn:hover:not(:disabled):not(.active) { background: var(--bg); }
-    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .page-btn { min-width: 2rem; height: 2rem; padding: 0 .5rem; border-radius: 7px; font-size: .8125rem; font-weight: 500; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; transition: background .15s, border-color .15s, transform .1s; display: inline-flex; align-items: center; justify-content: center; }
+    .page-btn:hover:not(:disabled):not(.active) { background: rgba(59,130,246,.12); border-color: var(--border-bright); }
+    .page-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; box-shadow: 0 2px 10px rgba(59,130,246,.4); }
+    .page-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .page-btn:active:not(:disabled) { transform: scale(.9); }
 
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-    }
+    .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); }
     .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
 
+    /* ── Notes grid ─────────────────────────────────────────────────── */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .note-card {
+      border-radius: 14px;
+      padding: 1.25rem 1.375rem;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      animation: fadeUp .3s cubic-bezier(.16,1,.3,1) both;
+      display: flex;
+      flex-direction: column;
+      gap: .625rem;
+      min-height: 160px;
+    }
+    .note-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.6), 0 0 0 1px var(--border-bright);
+    }
+    .note-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+    .note-title { font-weight: 600; font-size: .9375rem; line-height: 1.35; flex: 1; }
+    .note-actions { display: flex; gap: .2rem; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+    .note-card:hover .note-actions { opacity: 1; }
+    .note-body { font-size: .8125rem; color: var(--text-muted); line-height: 1.55; flex: 1; display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; word-break: break-word; }
+    .note-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: .5rem; border-top: 1px solid var(--border); }
+    .note-date { font-size: .7rem; color: rgba(139,163,199,.6); }
+    .note-chars { font-size: .7rem; color: rgba(139,163,199,.4); }
+
     /* ── Modal ──────────────────────────────────────────────────────── */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,.45);
-      align-items: center;
-      justify-content: center;
-      z-index: 40;
-      padding: 1rem;
-    }
-    .overlay.open { display: flex; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 20, .65); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 40; padding: 1rem; }
+    .overlay.open { display: flex; animation: fadeIn .2s ease both; }
+    .modal { border-radius: 18px; padding: 1.875rem; width: 100%; max-width: 480px; animation: modalPop .32s cubic-bezier(.16,1,.3,1) both; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.375rem; }
+    .modal-header h2 { font-size: 1.0625rem; font-weight: 700; background: linear-gradient(135deg, #e2e8f0, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .close-btn { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 1rem; color: var(--text-muted); padding: .3rem .5rem; transition: background .15s, color .15s; }
+    .close-btn:hover { background: rgba(255,255,255,.1); color: var(--text); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.625rem; }
 
-    .modal {
-      background: var(--surface);
-      border-radius: 12px;
-      box-shadow: var(--shadow-md);
-      padding: 1.75rem;
-      width: 100%;
-      max-width: 460px;
-      animation: pop .2s ease;
-    }
-    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .modal-header h2 { font-size: 1.0625rem; font-weight: 600; }
-    .close-btn { background: none; border: none; cursor: pointer; font-size: 1.125rem; color: var(--text-muted); padding: .25rem; }
-
-    .modal-footer { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.5rem; }
+    /* nota modal tem textarea grande */
+    #nota-modal .field textarea { min-height: 220px; }
 
     /* ── Toast ──────────────────────────────────────────────────────── */
-    .toast {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      padding: .75rem 1.25rem;
-      border-radius: 9px;
-      font-size: .875rem;
-      font-weight: 500;
-      color: #fff;
-      box-shadow: var(--shadow-md);
-      opacity: 0;
-      transform: translateY(.5rem);
-      transition: all .25s;
-      pointer-events: none;
-      z-index: 100;
-    }
-    .toast.visible { opacity: 1; transform: translateY(0); }
-    .toast.success { background: var(--success); }
-    .toast.error   { background: var(--danger); }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: .8rem 1.25rem; border-radius: 11px; font-size: .875rem; font-weight: 500; color: #fff; box-shadow: var(--shadow-md); opacity: 0; transform: translateY(10px) scale(.97); transition: opacity .3s, transform .3s cubic-bezier(.16,1,.3,1); pointer-events: none; z-index: 100; backdrop-filter: blur(12px); }
+    .toast.visible { opacity: 1; transform: translateY(0) scale(1); }
+    .toast.success { background: rgba(16,185,129,.85); border: 1px solid rgba(16,185,129,.3); }
+    .toast.error   { background: rgba(239,68,68,.85);  border: 1px solid rgba(239,68,68,.3); }
 
     /* ── Spinner ────────────────────────────────────────────────────── */
-    .spinner {
-      display: inline-block;
-      width: 1rem;
-      height: 1rem;
-      border: 2px solid rgba(255,255,255,.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+
+    /* ── Keyframes ──────────────────────────────────────────────────── */
+    @keyframes spin      { to { transform: rotate(360deg); } }
+    @keyframes shimmer   { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+    @keyframes fadeUp    { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes modalPop  { from { opacity: 0; transform: scale(.92) translateY(18px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes focusPulse { 0% { box-shadow: 0 0 0 0 rgba(59,130,246,.4); } 60% { box-shadow: 0 0 0 6px rgba(59,130,246,.12); } 100% { box-shadow: 0 0 0 3px rgba(59,130,246,.18); } }
   </style>
 </head>
 <body>
 
+<canvas id="bg-canvas"></canvas>
+<div class="aurora">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+</div>
+
 <!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
 <div id="login-screen">
-  <div class="login-card">
-    <div class="logo">🔐</div>
-    <h1>Password Manager</h1>
-    <p class="subtitle">Digite sua Chave Mestre para acessar</p>
+  <div class="login-card glass">
+    <div class="login-brand">
+      <div class="icon">🔐</div>
+      <div>
+        <h1>Password Manager</h1>
+        <div class="subtitle">Digite sua Chave Mestre para acessar</div>
+      </div>
+    </div>
+    <div class="divider"></div>
     <div class="field">
       <label for="inp-key">Chave Mestre</label>
       <div class="pass-wrap">
@@ -371,45 +306,72 @@
 <!-- ── DASHBOARD ───────────────────────────────────────────────────────── -->
 <div id="dashboard">
   <div class="topbar">
-    <div class="topbar-title">🔐 Password Manager</div>
+    <div class="topbar-brand">
+      <div class="topbar-icon">🔐</div>
+      <span class="topbar-title">Password Manager</span>
+    </div>
     <button class="btn btn-ghost" onclick="logout()">🔒 Bloquear</button>
   </div>
-  <div class="main-content">
-    <div class="toolbar">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearch(this.value)">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('senhas')" id="tab-senhas">
+      🔑 Senhas <span class="tab-badge" id="badge-senhas">0</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('notas')" id="tab-notas">
+      📝 Notas <span class="tab-badge" id="badge-notas">0</span>
+    </button>
+  </div>
+
+  <!-- ── SENHAS ────────────────────────────────────────────────────── -->
+  <div id="panel-senhas" class="tab-panel active">
+    <div class="main-content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearchSenhas(this.value)">
+        </div>
+        <button class="btn btn-primary" onclick="openSenhaModal()">+ Adicionar</button>
       </div>
-      <button class="btn btn-primary" onclick="openModal()">+ Adicionar</button>
+      <div class="table-card glass">
+        <table>
+          <thead>
+            <tr>
+              <th>Serviço</th><th>URL</th><th>E-mail / Usuário</th>
+              <th>Senha</th><th>Observação</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="creds-body"></tbody>
+        </table>
+        <div class="pagination" id="pagination" style="display:none">
+          <span class="pagination-info" id="page-info"></span>
+          <div class="pagination-controls" id="page-controls"></div>
+        </div>
+      </div>
     </div>
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Serviço</th>
-            <th>URL</th>
-            <th>E-mail / Usuário</th>
-            <th>Senha</th>
-            <th>Observação</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="creds-body"></tbody>
-      </table>
-      <div class="pagination" id="pagination" style="display:none">
-        <span class="pagination-info" id="page-info"></span>
-        <div class="pagination-controls" id="page-controls"></div>
+  </div>
+
+  <!-- ── NOTAS ─────────────────────────────────────────────────────── -->
+  <div id="panel-notas" class="tab-panel">
+    <div class="main-content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input id="inp-search-notas" type="text" placeholder="Buscar por título ou conteúdo…" oninput="onSearchNotas(this.value)">
+        </div>
+        <button class="btn btn-primary" onclick="openNotaModal()">+ Nova nota</button>
       </div>
+      <div id="notes-grid" class="notes-grid"></div>
     </div>
   </div>
 </div>
 
-<!-- ── MODAL ADD/EDIT ──────────────────────────────────────────────────── -->
-<div class="overlay" id="overlay">
-  <div class="modal">
+<!-- ── MODAL SENHA ─────────────────────────────────────────────────────── -->
+<div class="overlay" id="senha-overlay">
+  <div class="modal glass">
     <div class="modal-header">
-      <h2 id="modal-title">Adicionar Credencial</h2>
-      <button class="close-btn" onclick="closeModal()">✕</button>
+      <h2 id="senha-modal-title">Adicionar Credencial</h2>
+      <button class="close-btn" onclick="closeSenhaModal()">✕</button>
     </div>
     <div class="field"><label>Serviço *</label><input id="f-nome" type="text" placeholder="Github"></div>
     <div class="field"><label>URL</label><input id="f-url" type="text" placeholder="https://github.com"></div>
@@ -423,274 +385,327 @@
     </div>
     <div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Notas, dicas de recuperação, contexto…"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button id="save-btn" class="btn btn-primary" onclick="salvar()">Salvar</button>
+      <button class="btn btn-ghost" onclick="closeSenhaModal()">Cancelar</button>
+      <button id="save-senha-btn" class="btn btn-primary" onclick="salvarSenha()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL NOTA ──────────────────────────────────────────────────────── -->
+<div class="overlay" id="nota-modal">
+  <div class="modal glass">
+    <div class="modal-header">
+      <h2 id="nota-modal-title">Nova Nota</h2>
+      <button class="close-btn" onclick="closeNotaModal()">✕</button>
+    </div>
+    <div class="field"><label>Título *</label><input id="n-titulo" type="text" placeholder="Título da nota"></div>
+    <div class="field"><label>Conteúdo</label><textarea id="n-conteudo" placeholder="Escreva sua nota aqui…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeNotaModal()">Cancelar</button>
+      <button id="save-nota-btn" class="btn btn-primary" onclick="salvarNota()">Salvar</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<!-- ── SCRIPT ──────────────────────────────────────────────────────────── -->
 <script>
+  // ── Particle canvas ────────────────────────────────────────────────────
+  (function () {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    const N = 85, MAX = 140;
+    let P = [], W, H;
+    function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+    function rnd(a, b) { return Math.random() * (b - a) + a; }
+    function mk() { return { x: rnd(0,W), y: rnd(0,H), vx: rnd(-.3,.3), vy: rnd(-.3,.3), r: rnd(1.2,2.5) }; }
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < P.length; i++) {
+        for (let j = i+1; j < P.length; j++) {
+          const dx = P[i].x-P[j].x, dy = P[i].y-P[j].y, d = Math.hypot(dx,dy);
+          if (d < MAX) { ctx.beginPath(); ctx.strokeStyle=`rgba(99,155,255,${(1-d/MAX)*.22})`; ctx.lineWidth=.8; ctx.moveTo(P[i].x,P[i].y); ctx.lineTo(P[j].x,P[j].y); ctx.stroke(); }
+        }
+      }
+      for (const p of P) {
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='rgba(120,170,255,0.55)'; ctx.fill();
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x<-10) p.x=W+10; if(p.x>W+10) p.x=-10;
+        if(p.y<-10) p.y=H+10; if(p.y>H+10) p.y=-10;
+      }
+      requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', resize);
+    resize(); P = Array.from({length:N},mk); draw();
+  })();
+
+  // ── State ──────────────────────────────────────────────────────────────
   const PAGE_SIZE = 10;
   let masterKey = '';
-  let creds = [];          // lista completa (página atual)
-  let allCreds = [];       // lista completa para paginação
-  let currentPage = 1;
-  let editTarget = null;   // { nome, email } da credencial em edição
-  let searchTimer = null;
+  let creds = [], allCreds = [], currentPage = 1;
+  let editSenhaTarget = null;
+  let notas = [], editNotaId = null;
+  let searchSenhaTimer = null, searchNotaTimer = null;
 
   // ── API ────────────────────────────────────────────────────────────────
   function req(method, path, body) {
     return fetch(path, {
       method,
-      headers: {
-        'x-master-key': masterKey,
-        ...(body ? { 'content-type': 'application/json' } : {}),
-      },
+      headers: { 'x-master-key': masterKey, ...(body ? {'content-type':'application/json'} : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (tab === 'notas') loadNotas();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────
   async function unlock() {
     const key = document.getElementById('inp-key').value.trim();
     if (!key) return;
-
     const btn = document.getElementById('unlock-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Verificando…';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verificando…';
     masterKey = key;
-
     try {
       const r = await req('GET', '/credenciais/');
       if (r.ok) {
         document.getElementById('login-error').style.display = 'none';
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        renderCreds(await r.json());
+        const dash = document.getElementById('dashboard');
+        dash.style.display = 'block';
+        dash.classList.add('entering');
+        dash.addEventListener('animationend', () => dash.classList.remove('entering'), {once:true});
+        renderSenhas(await r.json());
       } else {
         masterKey = '';
         document.getElementById('login-error').style.display = 'block';
       }
     } catch {
       masterKey = '';
-      document.getElementById('login-error').textContent = 'Não foi possível conectar à API. Certifique-se de que pm-api está rodando.';
+      document.getElementById('login-error').textContent = 'Não foi possível conectar à API.';
       document.getElementById('login-error').style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Desbloquear';
-    }
+    } finally { btn.disabled = false; btn.textContent = 'Desbloquear'; }
   }
 
   function logout() {
-    masterKey = '';
-    creds = [];
+    masterKey = ''; creds = []; notas = [];
     document.getElementById('inp-key').value = '';
     document.getElementById('inp-search').value = '';
+    document.getElementById('inp-search-notas').value = '';
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
+    switchTab('senhas');
   }
 
-  // ── Load / Search ──────────────────────────────────────────────────────
-  async function loadAll() {
+  // ── Senhas ─────────────────────────────────────────────────────────────
+  async function loadSenhas() {
     const r = await req('GET', '/credenciais/');
-    if (r.ok) renderCreds(await r.json());
+    if (r.ok) renderSenhas(await r.json());
   }
 
-  function onSearch(valor) {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(async () => {
-      const t = valor.trim();
-      const path = t ? `/credenciais/buscar?termo=${encodeURIComponent(t)}` : '/credenciais/';
-      const r = await req('GET', path);
-      if (r.ok) renderCreds(await r.json());
+  function onSearchSenhas(v) {
+    clearTimeout(searchSenhaTimer);
+    searchSenhaTimer = setTimeout(async () => {
+      const t = v.trim();
+      const r = await req('GET', t ? `/credenciais/buscar?termo=${encodeURIComponent(t)}` : '/credenciais/');
+      if (r.ok) renderSenhas(await r.json());
     }, 280);
   }
 
-  // ── CRUD ───────────────────────────────────────────────────────────────
-  async function salvar() {
-    const nome       = document.getElementById('f-nome').value.trim();
-    const url        = document.getElementById('f-url').value.trim();
-    const email      = document.getElementById('f-email').value.trim();
-    const senha      = document.getElementById('f-senha').value;
-    const observacao = document.getElementById('f-obs').value.trim();
+  function renderSenhas(list, resetPage = true) {
+    allCreds = list;
+    if (resetPage) currentPage = 1;
+    const totalPages = Math.max(1, Math.ceil(allCreds.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    creds = allCreds.slice(start, start + PAGE_SIZE);
 
-    if (!nome || !email || !senha) {
-      toast('Serviço, e-mail e senha são obrigatórios.', 'error');
-      return;
+    document.getElementById('badge-senhas').textContent = allCreds.length;
+
+    const tbody = document.getElementById('creds-body');
+    const pag = document.getElementById('pagination');
+
+    if (!allCreds.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="background:var(--glass);backdrop-filter:blur(20px)"><div class="empty-state"><div class="empty-icon">🔎</div><div>Nenhuma credencial encontrada.</div></div></td></tr>`;
+      pag.style.display = 'none'; return;
     }
 
-    const btn = document.getElementById('save-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>';
-
-    try {
-      const r = editTarget
-        ? await req('PATCH', '/credenciais/', { nome_atual: editTarget.nome, email_atual: editTarget.email, nome, url, email, senha, observacao })
-        : await req('POST',  '/credenciais/', { nome, url, email, senha, observacao });
-
-      if (r.ok) {
-        closeModal();
-        toast(editTarget ? 'Credencial atualizada.' : 'Credencial adicionada.', 'success');
-        document.getElementById('inp-search').value = '';
-        await loadAll();
-      } else {
-        const err = await r.json();
-        toast(err.detail || 'Erro ao salvar.', 'error');
-      }
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Salvar';
-    }
+    tbody.innerHTML = creds.map((c, i) => `
+      <tr style="animation-delay:${i*45}ms">
+        <td><span class="service-name">${esc(c.nome)}</span></td>
+        <td>${c.url ? `<a class="url-link" href="${esc(c.url)}" target="_blank" title="${esc(c.url)}">${esc(c.url)}</a>` : `<span class="dash">—</span>`}</td>
+        <td>${esc(c.email)}</td>
+        <td><div class="senha-wrap">
+          <span class="senha-val" data-val="${esc(c.senha)}" data-visible="false">••••••••</span>
+          <button class="btn btn-ghost btn-icon" title="Mostrar/Ocultar" onclick="toggleSenha(this)">👁</button>
+          <button class="btn btn-ghost btn-icon" title="Copiar senha" onclick="copiar(this,${i})">📋</button>
+        </div></td>
+        <td class="obs-cell">${c.observacao ? `<span class="obs-text" title="${esc(c.observacao)}">${esc(c.observacao)}</span>` : `<span class="dash">—</span>`}</td>
+        <td><div class="row-actions">
+          <button class="btn btn-ghost btn-icon" onclick="openSenhaModal(${i})">✏️</button>
+          <button class="btn btn-danger btn-icon" onclick="removerSenha(${i})">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+    renderPagination(totalPages);
   }
 
-  async function remover(idx) {
-    const c = creds[idx];
-    if (!confirm(`Remover "${c.nome}" (${c.email})?`)) return;
-    const r = await req('DELETE', `/credenciais/?nome=${encodeURIComponent(c.nome)}&email=${encodeURIComponent(c.email)}`);
-    if (r.ok) {
-      toast('Credencial removida.', 'success');
-      await loadAll();
-    } else {
-      toast('Erro ao remover.', 'error');
-    }
+  function renderPagination(totalPages) {
+    const pag = document.getElementById('pagination');
+    if (totalPages <= 1) { pag.style.display = 'none'; return; }
+    pag.style.display = 'flex';
+    const start = (currentPage-1)*PAGE_SIZE+1, end = Math.min(currentPage*PAGE_SIZE, allCreds.length);
+    document.getElementById('page-info').textContent = `${start}–${end} de ${allCreds.length}`;
+    const pages = pageRange(currentPage, totalPages);
+    document.getElementById('page-controls').innerHTML = `
+      <button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>
+      ${pages.map(p => p==='…' ? `<span class="page-btn" style="cursor:default;border:none;background:none">…</span>` : `<button class="page-btn ${p===currentPage?'active':''}" onclick="goToPage(${p})">${p}</button>`).join('')}
+      <button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&#8250;</button>`;
   }
 
-  // ── Modal ──────────────────────────────────────────────────────────────
-  function openModal(idx = null) {
+  function pageRange(cur, tot) {
+    if (tot<=7) return Array.from({length:tot},(_,i)=>i+1);
+    if (cur<=4) return [1,2,3,4,5,'…',tot];
+    if (cur>=tot-3) return [1,'…',tot-4,tot-3,tot-2,tot-1,tot];
+    return [1,'…',cur-1,cur,cur+1,'…',tot];
+  }
+
+  function goToPage(p) { currentPage=p; renderSenhas(allCreds,false); document.querySelector('.table-card').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+  // Senha modal
+  function openSenhaModal(idx = null) {
     const c = idx !== null ? creds[idx] : null;
-    editTarget = c ? { nome: c.nome, email: c.email } : null;
-    document.getElementById('modal-title').textContent = c ? 'Editar Credencial' : 'Adicionar Credencial';
+    editSenhaTarget = c ? {nome:c.nome, email:c.email} : null;
+    document.getElementById('senha-modal-title').textContent = c ? 'Editar Credencial' : 'Adicionar Credencial';
     document.getElementById('f-nome').value  = c?.nome       ?? '';
     document.getElementById('f-url').value   = c?.url        ?? '';
     document.getElementById('f-email').value = c?.email      ?? '';
     document.getElementById('f-senha').value = c?.senha      ?? '';
     document.getElementById('f-obs').value   = c?.observacao ?? '';
-    document.getElementById('overlay').classList.add('open');
+    document.getElementById('senha-overlay').classList.add('open');
     document.getElementById('f-nome').focus();
   }
 
-  function closeModal() {
-    document.getElementById('overlay').classList.remove('open');
-    editTarget = null;
+  function closeSenhaModal() { document.getElementById('senha-overlay').classList.remove('open'); editSenhaTarget = null; }
+
+  async function salvarSenha() {
+    const nome=document.getElementById('f-nome').value.trim(), url=document.getElementById('f-url').value.trim(),
+          email=document.getElementById('f-email').value.trim(), senha=document.getElementById('f-senha').value,
+          observacao=document.getElementById('f-obs').value.trim();
+    if (!nome||!email||!senha) { toast('Serviço, e-mail e senha são obrigatórios.','error'); return; }
+    const btn = document.getElementById('save-senha-btn');
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+    try {
+      const r = editSenhaTarget
+        ? await req('PATCH','/credenciais/',{nome_atual:editSenhaTarget.nome,email_atual:editSenhaTarget.email,nome,url,email,senha,observacao})
+        : await req('POST', '/credenciais/',{nome,url,email,senha,observacao});
+      if (r.ok) { closeSenhaModal(); toast(editSenhaTarget?'Credencial atualizada.':'Credencial adicionada.','success'); document.getElementById('inp-search').value=''; await loadSenhas(); }
+      else { const e=await r.json(); toast(e.detail||'Erro ao salvar.','error'); }
+    } finally { btn.disabled=false; btn.textContent='Salvar'; }
   }
 
-  document.getElementById('overlay').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+  async function removerSenha(idx) {
+    const c = creds[idx];
+    if (!confirm(`Remover "${c.nome}" (${c.email})?`)) return;
+    const r = await req('DELETE',`/credenciais/?nome=${encodeURIComponent(c.nome)}&email=${encodeURIComponent(c.email)}`);
+    if (r.ok) { toast('Credencial removida.','success'); await loadSenhas(); }
+    else toast('Erro ao remover.','error');
+  }
 
-  // ── Render ─────────────────────────────────────────────────────────────
-  function renderCreds(list, resetPage = true) {
-    allCreds = list;
-    if (resetPage) currentPage = 1;
+  // ── Notas ──────────────────────────────────────────────────────────────
+  async function loadNotas() {
+    const r = await req('GET', '/notas/');
+    if (r.ok) renderNotas(await r.json());
+  }
 
-    const totalPages = Math.max(1, Math.ceil(allCreds.length / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
+  function onSearchNotas(v) {
+    clearTimeout(searchNotaTimer);
+    searchNotaTimer = setTimeout(async () => {
+      const t = v.trim();
+      const r = await req('GET', t ? `/notas/buscar?termo=${encodeURIComponent(t)}` : '/notas/');
+      if (r.ok) renderNotas(await r.json());
+    }, 280);
+  }
 
-    const start = (currentPage - 1) * PAGE_SIZE;
-    creds = allCreds.slice(start, start + PAGE_SIZE);
+  function renderNotas(list) {
+    notas = list;
+    document.getElementById('badge-notas').textContent = list.length;
+    const grid = document.getElementById('notes-grid');
 
-    const tbody = document.getElementById('creds-body');
-    const pagination = document.getElementById('pagination');
-
-    if (!allCreds.length) {
-      tbody.innerHTML = `
-        <tr><td colspan="6">
-          <div class="empty-state">
-            <div class="empty-icon">🔎</div>
-            <div>Nenhuma credencial encontrada.</div>
-          </div>
-        </td></tr>`;
-      pagination.style.display = 'none';
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📝</div><div>Nenhuma nota encontrada.</div></div>`;
       return;
     }
 
-    tbody.innerHTML = creds.map((c, i) => `
-      <tr>
-        <td><span class="service-name">${esc(c.nome)}</span></td>
-        <td>
-          ${c.url
-            ? `<a class="url-link" href="${esc(c.url)}" target="_blank" title="${esc(c.url)}">${esc(c.url)}</a>`
-            : `<span class="dash">—</span>`}
-        </td>
-        <td>${esc(c.email)}</td>
-        <td>
-          <div class="senha-wrap">
-            <span class="senha-val" data-val="${esc(c.senha)}" data-visible="false">••••••••</span>
-            <button class="btn btn-ghost btn-icon" title="Mostrar/Ocultar" onclick="toggleSenha(this)">👁</button>
-            <button class="btn btn-ghost btn-icon" title="Copiar senha" onclick="copiar(this, ${i})">📋</button>
+    grid.innerHTML = list.map((n, i) => `
+      <div class="note-card glass" style="animation-delay:${i*40}ms">
+        <div class="note-header">
+          <span class="note-title">${esc(n.titulo)}</span>
+          <div class="note-actions">
+            <button class="btn btn-ghost btn-icon" title="Editar" onclick="openNotaModal('${esc(n.id)}')">✏️</button>
+            <button class="btn btn-danger btn-icon" title="Remover" onclick="removerNota('${esc(n.id)}')">🗑️</button>
           </div>
-        </td>
-        <td class="obs-cell">
-          ${c.observacao
-            ? `<span class="obs-text" title="${esc(c.observacao)}">${esc(c.observacao)}</span>`
-            : `<span class="dash">—</span>`}
-        </td>
-        <td>
-          <div class="row-actions">
-            <button class="btn btn-ghost btn-icon" title="Editar" onclick="openModal(${i})">✏️</button>
-            <button class="btn btn-danger btn-icon" title="Remover" onclick="remover(${i})">🗑️</button>
-          </div>
-        </td>
-      </tr>`).join('');
-
-    renderPagination(totalPages);
+        </div>
+        ${n.conteudo ? `<div class="note-body">${esc(n.conteudo)}</div>` : ''}
+        <div class="note-footer">
+          <span class="note-date">${formatDate(n.atualizado_em)}</span>
+          ${n.conteudo ? `<span class="note-chars">${n.conteudo.length} chars</span>` : ''}
+        </div>
+      </div>`).join('');
   }
 
-  function renderPagination(totalPages) {
-    const pagination = document.getElementById('pagination');
-    const info = document.getElementById('page-info');
-    const controls = document.getElementById('page-controls');
-
-    if (totalPages <= 1) {
-      pagination.style.display = 'none';
-      return;
-    }
-
-    pagination.style.display = 'flex';
-    const start = (currentPage - 1) * PAGE_SIZE + 1;
-    const end = Math.min(currentPage * PAGE_SIZE, allCreds.length);
-    info.textContent = `${start}–${end} de ${allCreds.length}`;
-
-    const pages = pageRange(currentPage, totalPages);
-    controls.innerHTML = `
-      <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&#8249;</button>
-      ${pages.map(p => p === '…'
-        ? `<span class="page-btn" style="cursor:default;border:none;background:none">…</span>`
-        : `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`
-      ).join('')}
-      <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&#8250;</button>
-    `;
+  function openNotaModal(id = null) {
+    const n = id ? notas.find(x => x.id === id) : null;
+    editNotaId = n?.id ?? null;
+    document.getElementById('nota-modal-title').textContent = n ? 'Editar Nota' : 'Nova Nota';
+    document.getElementById('n-titulo').value   = n?.titulo   ?? '';
+    document.getElementById('n-conteudo').value = n?.conteudo ?? '';
+    document.getElementById('nota-modal').classList.add('open');
+    document.getElementById('n-titulo').focus();
   }
 
-  function pageRange(current, total) {
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-    if (current <= 4) return [1, 2, 3, 4, 5, '…', total];
-    if (current >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
-    return [1, '…', current - 1, current, current + 1, '…', total];
+  function closeNotaModal() { document.getElementById('nota-modal').classList.remove('open'); editNotaId = null; }
+
+  async function salvarNota() {
+    const titulo   = document.getElementById('n-titulo').value.trim();
+    const conteudo = document.getElementById('n-conteudo').value;
+    if (!titulo) { toast('O título é obrigatório.', 'error'); return; }
+    const btn = document.getElementById('save-nota-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      const r = editNotaId
+        ? await req('PATCH', `/notas/${editNotaId}`, {titulo, conteudo})
+        : await req('POST',  '/notas/', {titulo, conteudo});
+      if (r.ok) { closeNotaModal(); toast(editNotaId?'Nota atualizada.':'Nota criada.','success'); document.getElementById('inp-search-notas').value=''; await loadNotas(); }
+      else { const e=await r.json(); toast(e.detail||'Erro ao salvar.','error'); }
+    } finally { btn.disabled=false; btn.textContent='Salvar'; }
   }
 
-  function goToPage(page) {
-    currentPage = page;
-    renderCreds(allCreds, false);
-    document.querySelector('.table-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  async function removerNota(id) {
+    const n = notas.find(x => x.id === id);
+    if (!confirm(`Remover "${n?.titulo}"?`)) return;
+    const r = await req('DELETE', `/notas/${id}`);
+    if (r.ok) { toast('Nota removida.','success'); await loadNotas(); }
+    else toast('Erro ao remover.','error');
   }
 
   // ── UI helpers ─────────────────────────────────────────────────────────
   function toggleSenha(btn) {
     const span = btn.closest('.senha-wrap').querySelector('.senha-val');
-    const visible = span.dataset.visible === 'true';
-    span.textContent = visible ? '••••••••' : span.dataset.val;
-    span.dataset.visible = visible ? 'false' : 'true';
-    btn.textContent = visible ? '👁' : '🙈';
+    const v = span.dataset.visible === 'true';
+    span.textContent = v ? '••••••••' : span.dataset.val;
+    span.dataset.visible = v ? 'false' : 'true';
+    btn.textContent = v ? '👁' : '🙈';
   }
 
   async function copiar(btn, idx) {
     await navigator.clipboard.writeText(creds[idx].senha);
-    const orig = btn.textContent;
-    btn.textContent = '✅';
+    const orig = btn.textContent; btn.textContent = '✅';
     setTimeout(() => btn.textContent = orig, 1500);
   }
 
@@ -701,27 +716,27 @@
   }
 
   function esc(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => (
-      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-    ));
+    return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    } catch { return iso; }
   }
 
   let toastTimer;
-  function toast(msg, type = 'success') {
+  function toast(msg, type='success') {
     const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = `toast ${type} visible`;
+    el.textContent = msg; el.className = `toast ${type} visible`;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
   }
 
-  // ── Keyboard shortcuts ──────────────────────────────────────────────────
-  document.getElementById('inp-key').addEventListener('keydown', e => {
-    if (e.key === 'Enter') unlock();
-  });
-
+  // ── Keyboard ───────────────────────────────────────────────────────────
+  document.getElementById('inp-key').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Escape') { closeSenhaModal(); closeNotaModal(); }
   });
 </script>
 </body>

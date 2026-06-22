@@ -3,6 +3,26 @@
 from pydantic import BaseModel
 
 
+# ── Notas ──────────────────────────────────────────────────────────────────
+
+class NotaIn(BaseModel):
+    titulo: str
+    conteudo: str = ""
+
+
+class NotaOut(BaseModel):
+    id: str
+    titulo: str
+    conteudo: str
+    criado_em: str
+    atualizado_em: str
+
+
+class AtualizarNotaIn(BaseModel):
+    titulo: str
+    conteudo: str
+
+
 class CredencialIn(BaseModel):
     """Payload para criação de uma credencial."""
 
