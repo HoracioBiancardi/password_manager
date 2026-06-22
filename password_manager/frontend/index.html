@@ -251,6 +251,20 @@
     /* nota modal tem textarea grande */
     #nota-modal .field textarea { min-height: 220px; }
 
+    /* ── Import progress ────────────────────────────────────────────── */
+    .import-result {
+      margin-top: 1rem;
+      padding: .75rem 1rem;
+      border-radius: 10px;
+      background: rgba(16,185,129,.1);
+      border: 1px solid rgba(16,185,129,.25);
+      font-size: .8125rem;
+      color: var(--text-muted);
+      display: none;
+    }
+    .import-result b { color: var(--text); }
+    .import-result.error-result { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.25); }
+
     /* ── Toast ──────────────────────────────────────────────────────── */
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: .8rem 1.25rem; border-radius: 11px; font-size: .875rem; font-weight: 500; color: #fff; box-shadow: var(--shadow-md); opacity: 0; transform: translateY(10px) scale(.97); transition: opacity .3s, transform .3s cubic-bezier(.16,1,.3,1); pointer-events: none; z-index: 100; backdrop-filter: blur(12px); }
     .toast.visible { opacity: 1; transform: translateY(0) scale(1); }
@@ -310,7 +324,12 @@
       <div class="topbar-icon">🔐</div>
       <span class="topbar-title">Password Manager</span>
     </div>
-    <button class="btn btn-ghost" onclick="logout()">🔒 Bloquear</button>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <button class="btn btn-ghost" onclick="exportar()" title="Exportar backup JSON">⬇ Exportar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('file-import').click()" title="Importar backup JSON">⬆ Importar</button>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importar(this)">
+      <button class="btn btn-ghost" onclick="logout()">🔒 Bloquear</button>
+    </div>
   </div>
 
   <!-- Tabs -->
@@ -731,6 +750,56 @@
     el.textContent = msg; el.className = `toast ${type} visible`;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
+  }
+
+  // ── Export / Import ────────────────────────────────────────────────────
+  async function exportar() {
+    try {
+      const r = await req('GET', '/io/export');
+      if (!r.ok) { toast('Erro ao exportar.', 'error'); return; }
+      const blob = new Blob([JSON.stringify(await r.json(), null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const ts   = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+      a.href = url; a.download = `pm-backup-${ts}.json`;
+      a.click(); URL.revokeObjectURL(url);
+      toast('Backup exportado com sucesso.', 'success');
+    } catch { toast('Erro ao exportar.', 'error'); }
+  }
+
+  async function importar(input) {
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+
+    let payload;
+    try {
+      payload = JSON.parse(await file.text());
+    } catch {
+      toast('Arquivo inválido — não é um JSON válido.', 'error');
+      return;
+    }
+
+    const senhasQtd = payload.senhas?.length ?? 0;
+    const notasQtd  = payload.notas?.length  ?? 0;
+    if (!confirm(`Importar ${senhasQtd} senha(s) e ${notasQtd} nota(s)?\nDuplicatas serão ignoradas.`)) return;
+
+    try {
+      const r = await req('POST', '/io/import', {
+        version: payload.version ?? 1,
+        senhas:  payload.senhas  ?? [],
+        notas:   payload.notas   ?? [],
+      });
+      if (!r.ok) { const e = await r.json(); toast(e.detail || 'Erro ao importar.', 'error'); return; }
+      const res = await r.json();
+      toast(
+        `Importado: ${res.senhas_importadas} senha(s) e ${res.notas_importadas} nota(s). ` +
+        `Ignorados: ${res.senhas_ignoradas + res.notas_ignoradas} duplicata(s).`,
+        'success'
+      );
+      await loadSenhas();
+      await loadNotas();
+    } catch { toast('Erro ao importar.', 'error'); }
   }
 
   // ── Keyboard ───────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 
 from .routes import router
 from .routes_notas import router as router_notas
+from .routes_io import router as router_io
 
 _FRONTEND = Path(__file__).parent.parent / "frontend" / "index.html"
 
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
 
     app.include_router(router)
     app.include_router(router_notas)
+    app.include_router(router_io)
     return app
 
 
