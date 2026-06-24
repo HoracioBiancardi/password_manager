@@ -10,7 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from .routes import router
 from .routes_io import router as router_io
 
-_FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+_FRONTEND_DIR: Path = Path(__file__).parent.parent / "frontend"
+_DS_DIR: Path = Path(__file__).parent.parent.parent / "design-system"
 
 
 def create_app() -> FastAPI:
@@ -45,7 +46,8 @@ def create_app() -> FastAPI:
     app.include_router(router)
     app.include_router(router_io)
 
-    app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR / "static")), name="static")
+    app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
+    app.mount("/ds", StaticFiles(directory=str(_DS_DIR)), name="design-system")
     return app
 
 
