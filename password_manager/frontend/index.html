@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Manager</title>
+  <title>SWORDPOWER – Password Manager</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -116,51 +116,44 @@
       -webkit-backdrop-filter: blur(28px) saturate(160%);
       background: rgba(5, 11, 30, 0.8);
       border-bottom: 1px solid var(--border);
-      padding: .9rem 1.75rem;
+      padding: .75rem 1.75rem;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 10;
       animation: slideDown .45s cubic-bezier(.16,1,.3,1) both;
     }
-    .topbar-brand { display: flex; align-items: center; gap: .6rem; }
-    .topbar-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #6d28d9); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-    .topbar-title { font-size: 1rem; font-weight: 700; }
 
-    /* ── Tabs ───────────────────────────────────────────────────────── */
-    .tabs {
-      display: flex;
-      gap: 0;
-      padding: 0 1.75rem;
-      background: rgba(5, 11, 30, 0.6);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+    /* ── Brand logo ─────────────────────────────────────────────────── */
+    .brand { display: flex; align-items: center; gap: .875rem; }
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 18px rgba(59,130,246,.45), 0 0 6px rgba(109,40,217,.4);
+      flex-shrink: 0;
     }
-    .tab-btn {
-      display: flex; align-items: center; gap: .45rem;
-      padding: .8rem 1.25rem;
-      font-size: .875rem; font-weight: 500;
+    .brand-text { display: flex; flex-direction: column; line-height: 1; }
+    .brand-name {
+      font-size: 1.0625rem;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      background: linear-gradient(100deg, #93c5fd 0%, #c4b5fd 45%, #f9a8d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+    }
+    .brand-tagline {
+      font-size: .6rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
       color: var(--text-muted);
-      background: none; border: none;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: color .2s, border-color .2s;
-      margin-bottom: -1px;
+      margin-top: .25rem;
+      opacity: .75;
     }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-    .tab-btn .tab-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 18px; height: 18px;
-      padding: 0 5px;
-      background: rgba(59,130,246,.2);
-      color: #60a5fa;
-      border-radius: 99px;
-      font-size: .7rem; font-weight: 600;
-    }
-    .tab-btn.active .tab-badge { background: rgba(59,130,246,.35); }
 
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
+    /* ── Main content ───────────────────────────────────────────────── */
     .main-content { padding: 1.75rem; max-width: 1200px; margin: 0 auto; }
 
     .toolbar { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
@@ -207,37 +200,6 @@
     .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); }
     .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
 
-    /* ── Notes grid ─────────────────────────────────────────────────── */
-    .notes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-
-    .note-card {
-      border-radius: 14px;
-      padding: 1.25rem 1.375rem;
-      cursor: pointer;
-      transition: transform .2s, box-shadow .2s, border-color .2s;
-      animation: fadeUp .3s cubic-bezier(.16,1,.3,1) both;
-      display: flex;
-      flex-direction: column;
-      gap: .625rem;
-      min-height: 160px;
-    }
-    .note-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(0,0,0,.6), 0 0 0 1px var(--border-bright);
-    }
-    .note-header { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
-    .note-title { font-weight: 600; font-size: .9375rem; line-height: 1.35; flex: 1; }
-    .note-actions { display: flex; gap: .2rem; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
-    .note-card:hover .note-actions { opacity: 1; }
-    .note-body { font-size: .8125rem; color: var(--text-muted); line-height: 1.55; flex: 1; display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; word-break: break-word; }
-    .note-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: .5rem; border-top: 1px solid var(--border); }
-    .note-date { font-size: .7rem; color: rgba(139,163,199,.6); }
-    .note-chars { font-size: .7rem; color: rgba(139,163,199,.4); }
-
     /* ── Modal ──────────────────────────────────────────────────────── */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 20, .65); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 40; padding: 1rem; }
     .overlay.open { display: flex; animation: fadeIn .2s ease both; }
@@ -247,23 +209,6 @@
     .close-btn { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 1rem; color: var(--text-muted); padding: .3rem .5rem; transition: background .15s, color .15s; }
     .close-btn:hover { background: rgba(255,255,255,.1); color: var(--text); }
     .modal-footer { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.625rem; }
-
-    /* nota modal tem textarea grande */
-    #nota-modal .field textarea { min-height: 220px; }
-
-    /* ── Import progress ────────────────────────────────────────────── */
-    .import-result {
-      margin-top: 1rem;
-      padding: .75rem 1rem;
-      border-radius: 10px;
-      background: rgba(16,185,129,.1);
-      border: 1px solid rgba(16,185,129,.25);
-      font-size: .8125rem;
-      color: var(--text-muted);
-      display: none;
-    }
-    .import-result b { color: var(--text); }
-    .import-result.error-result { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.25); }
 
     /* ── Toast ──────────────────────────────────────────────────────── */
     .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: .8rem 1.25rem; border-radius: 11px; font-size: .875rem; font-weight: 500; color: #fff; box-shadow: var(--shadow-md); opacity: 0; transform: translateY(10px) scale(.97); transition: opacity .3s, transform .3s cubic-bezier(.16,1,.3,1); pointer-events: none; z-index: 100; backdrop-filter: blur(12px); }
@@ -320,9 +265,19 @@
 <!-- ── DASHBOARD ───────────────────────────────────────────────────────── -->
 <div id="dashboard">
   <div class="topbar">
-    <div class="topbar-brand">
-      <div class="topbar-icon">🔐</div>
-      <span class="topbar-title">Password Manager</span>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14.5 2L21 8.5L9 20.5L3 21L3.5 15L14.5 2Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M14.5 2L18 5.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M3.5 15L8 14" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="20" cy="4" r="1.5" fill="rgba(196,181,253,0.9)"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">Swordpower</span>
+        <span class="brand-tagline">Password Manager</span>
+      </div>
     </div>
     <div style="display:flex;gap:.5rem;align-items:center">
       <button class="btn btn-ghost" onclick="exportar()" title="Exportar backup JSON">⬇ Exportar</button>
@@ -332,55 +287,29 @@
     </div>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('senhas')" id="tab-senhas">
-      🔑 Senhas <span class="tab-badge" id="badge-senhas">0</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('notas')" id="tab-notas">
-      📝 Notas <span class="tab-badge" id="badge-notas">0</span>
-    </button>
-  </div>
-
   <!-- ── SENHAS ────────────────────────────────────────────────────── -->
-  <div id="panel-senhas" class="tab-panel active">
-    <div class="main-content">
-      <div class="toolbar">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearchSenhas(this.value)">
-        </div>
-        <button class="btn btn-primary" onclick="openSenhaModal()">+ Adicionar</button>
+  <div class="main-content">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearchSenhas(this.value)">
       </div>
-      <div class="table-card glass">
-        <table>
-          <thead>
-            <tr>
-              <th>Serviço</th><th>URL</th><th>E-mail / Usuário</th>
-              <th>Senha</th><th>Observação</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="creds-body"></tbody>
-        </table>
-        <div class="pagination" id="pagination" style="display:none">
-          <span class="pagination-info" id="page-info"></span>
-          <div class="pagination-controls" id="page-controls"></div>
-        </div>
-      </div>
+      <button class="btn btn-primary" onclick="openSenhaModal()">+ Adicionar</button>
     </div>
-  </div>
-
-  <!-- ── NOTAS ─────────────────────────────────────────────────────── -->
-  <div id="panel-notas" class="tab-panel">
-    <div class="main-content">
-      <div class="toolbar">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input id="inp-search-notas" type="text" placeholder="Buscar por título ou conteúdo…" oninput="onSearchNotas(this.value)">
-        </div>
-        <button class="btn btn-primary" onclick="openNotaModal()">+ Nova nota</button>
+    <div class="table-card glass">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th><th>URL</th><th>E-mail / Usuário</th>
+            <th>Senha</th><th>Observação</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="creds-body"></tbody>
+      </table>
+      <div class="pagination" id="pagination" style="display:none">
+        <span class="pagination-info" id="page-info"></span>
+        <div class="pagination-controls" id="page-controls"></div>
       </div>
-      <div id="notes-grid" class="notes-grid"></div>
     </div>
   </div>
 </div>
@@ -406,22 +335,6 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeSenhaModal()">Cancelar</button>
       <button id="save-senha-btn" class="btn btn-primary" onclick="salvarSenha()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── MODAL NOTA ──────────────────────────────────────────────────────── -->
-<div class="overlay" id="nota-modal">
-  <div class="modal glass">
-    <div class="modal-header">
-      <h2 id="nota-modal-title">Nova Nota</h2>
-      <button class="close-btn" onclick="closeNotaModal()">✕</button>
-    </div>
-    <div class="field"><label>Título *</label><input id="n-titulo" type="text" placeholder="Título da nota"></div>
-    <div class="field"><label>Conteúdo</label><textarea id="n-conteudo" placeholder="Escreva sua nota aqui…"></textarea></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeNotaModal()">Cancelar</button>
-      <button id="save-nota-btn" class="btn btn-primary" onclick="salvarNota()">Salvar</button>
     </div>
   </div>
 </div>
@@ -463,8 +376,7 @@
   let masterKey = '';
   let creds = [], allCreds = [], currentPage = 1;
   let editSenhaTarget = null;
-  let notas = [], editNotaId = null;
-  let searchSenhaTimer = null, searchNotaTimer = null;
+  let searchSenhaTimer = null;
 
   // ── API ────────────────────────────────────────────────────────────────
   function req(method, path, body) {
@@ -473,15 +385,6 @@
       headers: { 'x-master-key': masterKey, ...(body ? {'content-type':'application/json'} : {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
-  }
-
-  // ── Tabs ───────────────────────────────────────────────────────────────
-  function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('panel-' + tab).classList.add('active');
-    if (tab === 'notas') loadNotas();
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────
@@ -513,13 +416,11 @@
   }
 
   function logout() {
-    masterKey = ''; creds = []; notas = [];
+    masterKey = ''; creds = [];
     document.getElementById('inp-key').value = '';
     document.getElementById('inp-search').value = '';
-    document.getElementById('inp-search-notas').value = '';
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
-    switchTab('senhas');
   }
 
   // ── Senhas ─────────────────────────────────────────────────────────────
@@ -544,8 +445,6 @@
     if (currentPage > totalPages) currentPage = totalPages;
     const start = (currentPage - 1) * PAGE_SIZE;
     creds = allCreds.slice(start, start + PAGE_SIZE);
-
-    document.getElementById('badge-senhas').textContent = allCreds.length;
 
     const tbody = document.getElementById('creds-body');
     const pag = document.getElementById('pagination');
@@ -636,83 +535,6 @@
     else toast('Erro ao remover.','error');
   }
 
-  // ── Notas ──────────────────────────────────────────────────────────────
-  async function loadNotas() {
-    const r = await req('GET', '/notas/');
-    if (r.ok) renderNotas(await r.json());
-  }
-
-  function onSearchNotas(v) {
-    clearTimeout(searchNotaTimer);
-    searchNotaTimer = setTimeout(async () => {
-      const t = v.trim();
-      const r = await req('GET', t ? `/notas/buscar?termo=${encodeURIComponent(t)}` : '/notas/');
-      if (r.ok) renderNotas(await r.json());
-    }, 280);
-  }
-
-  function renderNotas(list) {
-    notas = list;
-    document.getElementById('badge-notas').textContent = list.length;
-    const grid = document.getElementById('notes-grid');
-
-    if (!list.length) {
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📝</div><div>Nenhuma nota encontrada.</div></div>`;
-      return;
-    }
-
-    grid.innerHTML = list.map((n, i) => `
-      <div class="note-card glass" style="animation-delay:${i*40}ms">
-        <div class="note-header">
-          <span class="note-title">${esc(n.titulo)}</span>
-          <div class="note-actions">
-            <button class="btn btn-ghost btn-icon" title="Editar" onclick="openNotaModal('${esc(n.id)}')">✏️</button>
-            <button class="btn btn-danger btn-icon" title="Remover" onclick="removerNota('${esc(n.id)}')">🗑️</button>
-          </div>
-        </div>
-        ${n.conteudo ? `<div class="note-body">${esc(n.conteudo)}</div>` : ''}
-        <div class="note-footer">
-          <span class="note-date">${formatDate(n.atualizado_em)}</span>
-          ${n.conteudo ? `<span class="note-chars">${n.conteudo.length} chars</span>` : ''}
-        </div>
-      </div>`).join('');
-  }
-
-  function openNotaModal(id = null) {
-    const n = id ? notas.find(x => x.id === id) : null;
-    editNotaId = n?.id ?? null;
-    document.getElementById('nota-modal-title').textContent = n ? 'Editar Nota' : 'Nova Nota';
-    document.getElementById('n-titulo').value   = n?.titulo   ?? '';
-    document.getElementById('n-conteudo').value = n?.conteudo ?? '';
-    document.getElementById('nota-modal').classList.add('open');
-    document.getElementById('n-titulo').focus();
-  }
-
-  function closeNotaModal() { document.getElementById('nota-modal').classList.remove('open'); editNotaId = null; }
-
-  async function salvarNota() {
-    const titulo   = document.getElementById('n-titulo').value.trim();
-    const conteudo = document.getElementById('n-conteudo').value;
-    if (!titulo) { toast('O título é obrigatório.', 'error'); return; }
-    const btn = document.getElementById('save-nota-btn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-    try {
-      const r = editNotaId
-        ? await req('PATCH', `/notas/${editNotaId}`, {titulo, conteudo})
-        : await req('POST',  '/notas/', {titulo, conteudo});
-      if (r.ok) { closeNotaModal(); toast(editNotaId?'Nota atualizada.':'Nota criada.','success'); document.getElementById('inp-search-notas').value=''; await loadNotas(); }
-      else { const e=await r.json(); toast(e.detail||'Erro ao salvar.','error'); }
-    } finally { btn.disabled=false; btn.textContent='Salvar'; }
-  }
-
-  async function removerNota(id) {
-    const n = notas.find(x => x.id === id);
-    if (!confirm(`Remover "${n?.titulo}"?`)) return;
-    const r = await req('DELETE', `/notas/${id}`);
-    if (r.ok) { toast('Nota removida.','success'); await loadNotas(); }
-    else toast('Erro ao remover.','error');
-  }
-
   // ── UI helpers ─────────────────────────────────────────────────────────
   function toggleSenha(btn) {
     const span = btn.closest('.senha-wrap').querySelector('.senha-val');
@@ -736,12 +558,6 @@
 
   function esc(s) {
     return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function formatDate(iso) {
-    try {
-      return new Date(iso).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    } catch { return iso; }
   }
 
   let toastTimer;
@@ -781,31 +597,29 @@
     }
 
     const senhasQtd = payload.senhas?.length ?? 0;
-    const notasQtd  = payload.notas?.length  ?? 0;
-    if (!confirm(`Importar ${senhasQtd} senha(s) e ${notasQtd} nota(s)?\nDuplicatas serão ignoradas.`)) return;
+    if (!confirm(`Importar ${senhasQtd} senha(s)?\nDuplicatas serão ignoradas.`)) return;
 
     try {
       const r = await req('POST', '/io/import', {
         version: payload.version ?? 1,
         senhas:  payload.senhas  ?? [],
-        notas:   payload.notas   ?? [],
+        notas:   [],
       });
       if (!r.ok) { const e = await r.json(); toast(e.detail || 'Erro ao importar.', 'error'); return; }
       const res = await r.json();
       toast(
-        `Importado: ${res.senhas_importadas} senha(s) e ${res.notas_importadas} nota(s). ` +
-        `Ignorados: ${res.senhas_ignoradas + res.notas_ignoradas} duplicata(s).`,
+        `Importado: ${res.senhas_importadas} senha(s). ` +
+        `Ignorados: ${res.senhas_ignoradas} duplicata(s).`,
         'success'
       );
       await loadSenhas();
-      await loadNotas();
     } catch { toast('Erro ao importar.', 'error'); }
   }
 
   // ── Keyboard ───────────────────────────────────────────────────────────
   document.getElementById('inp-key').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeSenhaModal(); closeNotaModal(); }
+    if (e.key === 'Escape') closeSenhaModal();
   });
 </script>
 </body>
