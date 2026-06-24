@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,180 +8,217 @@
   <link rel="stylesheet" href="/ds/css/design-system.css">
   <link rel="stylesheet" href="/ds/css/app.css">
 </head>
+
 <body>
 
-<canvas id="bg-canvas"></canvas>
-<div class="aurora">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-  <div class="orb orb-4"></div>
-</div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="aurora">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
 
-<!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
-<div class="overlay login-overlay" id="login-overlay">
-  <div class="modal glass login-modal">
-    <div class="login-brand">
-      <div class="login-icon">🔐</div>
-      <div>
-        <div class="login-title">PM Vault</div>
-        <div class="login-sub">Gerenciador de Senhas</div>
+  <!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
+  <div class="overlay login-overlay" id="login-overlay">
+    <div class="modal glass login-modal">
+      <div class="login-brand">
+        <div class="login-icon">🔐</div>
+        <div>
+          <div class="login-title">PM Vault</div>
+          <div class="login-sub">Gerenciador de Senhas</div>
+        </div>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label class="form-label" for="master-key-input">Chave Mestre</label>
-      <div class="pw-wrap">
-        <input id="master-key-input" type="password" class="form-input"
-          placeholder="Cole sua chave Fernet…" autocomplete="off"
-          onkeydown="if(event.key==='Enter') login()">
-        <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">👁</button>
+      <div class="form-group">
+        <label class="form-label" for="master-key-input">Chave Mestre</label>
+        <div class="pw-wrap">
+          <input id="master-key-input" type="password" class="form-input" placeholder="Cole sua chave Fernet…"
+            autocomplete="off" onkeydown="if(event.key==='Enter') login()">
+          <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">👁</button>
+        </div>
+        <p class="form-hint">Usada apenas para descriptografar o cofre. Não é armazenada em disco.</p>
       </div>
-      <p class="form-hint">Usada apenas para descriptografar o cofre. Não é armazenada em disco.</p>
-    </div>
 
-    <div class="modal-footer" style="padding-top:.25rem">
-      <button class="btn btn-primary" id="login-btn" onclick="login()"
-        style="width:100%;justify-content:center;padding:.65rem">
-        🔓 Desbloquear
-      </button>
+      <div class="modal-footer" style="padding-top:.25rem;flex-direction:column;gap:.6rem">
+        <button class="btn btn-primary" id="login-btn" onclick="login()"
+          style="width:100%;justify-content:center;padding:.65rem">
+          🔓 Desbloquear
+        </button>
+        <button class="btn btn-ghost" onclick="openKeyGenModal()"
+          style="width:100%;justify-content:center;font-size:.78rem">
+          ✨ Gerar nova Chave Mestre
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ── TOPBAR ──────────────────────────────────────────────────────────── -->
-<div class="topbar" id="topbar" style="display:none">
-  <div class="brand">
-    <div class="brand-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" stroke-width="1.8"/>
-        <path d="M8 11V7a4 4 0 018 0v4" stroke="rgba(196,181,253,.8)" stroke-width="1.8" stroke-linecap="round"/>
-        <circle cx="12" cy="16" r="1.5" fill="rgba(255,255,255,.7)"/>
-      </svg>
-    </div>
-    <div class="brand-text">
-      <span class="brand-name">PM Vault</span>
-      <span class="brand-tagline">Gerenciador de Senhas</span>
+  <!-- ── KEYGEN MODAL ────────────────────────────────────────────────── -->
+  <div class="overlay" id="keygen-overlay">
+    <div class="modal glass" style="max-width:480px">
+      <div class="modal-header">
+        <h2>Nova Chave Mestre</h2>
+        <button class="close-btn" onclick="closeKeyGenModal()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:.9rem">
+        <p class="form-hint" style="opacity:1">
+          Uma nova chave Fernet foi gerada. Guarde-a em local seguro —
+          sem ela suas senhas não poderão ser recuperadas.
+        </p>
+        <div class="keygen-key-box">
+          <code id="keygen-key-text"></code>
+          <button class="copy-btn" id="keygen-copy-btn" onclick="copyGeneratedKey(this)"
+            title="Copiar chave">📋</button>
+        </div>
+        <p class="keygen-warning">⚠ Esta chave não é armazenada em lugar nenhum. Copie agora.</p>
+        <p class="keygen-warning"
+          style="color:#f87171;border-color:rgba(248,113,113,.18);background:rgba(248,113,113,.07)">
+          🗄 Chave nova = cofre novo. Se você já tem um <code style="font-size:.7rem">senhas.enc</code>,
+          ele continuará cifrado com a chave anterior. Use a chave nova apenas para um vault vazio ou após exportar seus
+          dados.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="regenerateKey()">🔄 Gerar outra</button>
+        <button class="btn btn-primary" onclick="useGeneratedKey()">Usar esta chave →</button>
+      </div>
     </div>
   </div>
-  <div class="topbar-right">
-    <span id="conn-badge" class="conn-badge">● offline</span>
-    <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup JSON">⬇ Exportar</button>
-    <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
+
+  <!-- ── TOPBAR ──────────────────────────────────────────────────────────── -->
+  <div class="topbar" id="topbar" style="display:none">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" stroke-width="1.8" />
+          <path d="M8 11V7a4 4 0 018 0v4" stroke="rgba(196,181,253,.8)" stroke-width="1.8" stroke-linecap="round" />
+          <circle cx="12" cy="16" r="1.5" fill="rgba(255,255,255,.7)" />
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">PM Vault</span>
+        <span class="brand-tagline">Gerenciador de Senhas</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="conn-badge" class="conn-badge">● offline</span>
+      <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup JSON">⬇ Exportar</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
+    </div>
   </div>
-</div>
 
-<!-- ── APP ────────────────────────────────────────────────────────────── -->
-<div class="app-layout" id="app-layout" style="display:none">
+  <!-- ── APP ────────────────────────────────────────────────────────────── -->
+  <div class="app-layout" id="app-layout" style="display:none">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar glass">
-    <div class="sidebar-top">
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar serviço, e-mail, URL…"
-          oninput="onSearch(this.value)" autocomplete="off">
-      </div>
-      <div class="sidebar-actions" style="margin-top:.5rem">
-        <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
-        <span class="count-badge" id="cred-count">0</span>
-      </div>
-    </div>
-
-    <div id="cred-list" class="list-items">
-      <div class="list-empty"><div class="ei">⏳</div>Carregando…</div>
-    </div>
-
-    <div class="sidebar-footer" id="sidebar-footer">–</div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main-panel">
-
-    <!-- Estado vazio -->
-    <div id="empty-panel" class="empty-panel">
-      <div class="empty-state">
-        <div class="empty-icon">🔑</div>
-        <p>Selecione uma credencial ou crie uma nova</p>
-        <div class="empty-hint">Todas as senhas são criptografadas com Fernet</div>
-      </div>
-    </div>
-
-    <!-- Painel de visualização -->
-    <div id="cred-view-panel" class="cred-panel" style="display:none">
-      <div class="cred-panel-header">
-        <span id="view-title" class="cred-panel-title"></span>
-        <div class="cred-panel-actions">
-          <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
-          <button class="btn btn-danger btn-sm" id="view-del-btn" onclick="">🗑 Excluir</button>
+    <!-- SIDEBAR -->
+    <aside class="sidebar glass">
+      <div class="sidebar-top">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar serviço, e-mail, URL…" oninput="onSearch(this.value)"
+            autocomplete="off">
+        </div>
+        <div class="sidebar-actions" style="margin-top:.5rem">
+          <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
+          <span class="count-badge" id="cred-count" hidden>0</span>
         </div>
       </div>
-      <div id="view-fields" class="cred-panel-body"></div>
-    </div>
 
-    <!-- Painel de formulário (nova / edição) -->
-    <div id="cred-form-panel" class="cred-panel" style="display:none;flex-direction:column">
-      <div class="cred-panel-header">
-        <span id="form-title-label" class="cred-panel-title">Nova Credencial</span>
+      <div id="cred-list" class="list-items">
+        <div class="list-empty">
+          <div class="ei">⏳</div>Carregando…
+        </div>
       </div>
 
-      <div class="cred-form">
-        <div class="form-group">
-          <label class="form-label" for="f-nome">Serviço / Nome *</label>
-          <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
+      <div class="sidebar-footer" id="sidebar-footer">–</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-panel">
+
+      <!-- Estado vazio -->
+      <div id="empty-panel" class="empty-panel">
+        <div class="empty-state">
+          <div class="empty-icon">🔑</div>
+          <p>Selecione uma credencial ou crie uma nova</p>
+          <div class="empty-hint">Todas as senhas são criptografadas com Fernet</div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="f-url">URL</label>
-          <input id="f-url" type="text" class="form-input" placeholder="https://…" autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-email">E-mail *</label>
-          <input id="f-email" type="email" class="form-input" placeholder="usuario@dominio.com" autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="f-senha">Senha *</label>
-          <div class="pw-wrap">
-            <input id="f-senha" type="password" class="form-input"
-              placeholder="••••••••" autocomplete="new-password">
-            <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
+      </div>
+
+      <!-- Painel de visualização -->
+      <div id="cred-view-panel" class="cred-panel" style="display:none">
+        <div class="cred-panel-header">
+          <span id="view-title" class="cred-panel-title"></span>
+          <div class="cred-panel-actions">
+            <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
+            <button class="btn btn-danger btn-sm" id="view-del-btn" onclick="">🗑 Excluir</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="f-obs">Observação</label>
-          <textarea id="f-obs" class="form-input form-textarea"
-            placeholder="Notas adicionais…"></textarea>
+        <div id="view-fields" class="cred-panel-body"></div>
+      </div>
+
+      <!-- Painel de formulário (nova / edição) -->
+      <div id="cred-form-panel" class="cred-panel" style="display:none;flex-direction:column">
+        <div class="cred-panel-header">
+          <span id="form-title-label" class="cred-panel-title">Nova Credencial</span>
+        </div>
+
+        <div class="cred-form">
+          <div class="form-group">
+            <label class="form-label" for="f-nome">Serviço / Nome *</label>
+            <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-url">URL</label>
+            <input id="f-url" type="text" class="form-input" placeholder="https://…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-email">E-mail *</label>
+            <input id="f-email" type="email" class="form-input" placeholder="usuario@dominio.com" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-senha">Senha *</label>
+            <div class="pw-wrap">
+              <input id="f-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password">
+              <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-obs">Observação</label>
+            <textarea id="f-obs" class="form-input form-textarea" placeholder="Notas adicionais…"></textarea>
+          </div>
+        </div>
+
+        <div class="cred-form-footer">
+          <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
+          <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
         </div>
       </div>
 
-      <div class="cred-form-footer">
-        <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
-        <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
+    </main>
+  </div>
+
+  <!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
+  <div class="overlay" id="delete-overlay">
+    <div class="modal glass">
+      <div class="modal-header">
+        <h2>Excluir credencial</h2>
+        <button class="close-btn" onclick="closeDeleteModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        Deseja excluir permanentemente <strong id="del-name"></strong>?<br>
+        <span style="font-size:.78rem;opacity:.7">Esta ação não pode ser desfeita.</span>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+        <button class="btn btn-danger" id="confirm-del-btn" onclick="confirmDelete()">Excluir</button>
       </div>
     </div>
-
-  </main>
-</div>
-
-<!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
-<div class="overlay" id="delete-overlay">
-  <div class="modal glass">
-    <div class="modal-header">
-      <h2>Excluir credencial</h2>
-      <button class="close-btn" onclick="closeDeleteModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      Deseja excluir permanentemente <strong id="del-name"></strong>?<br>
-      <span style="font-size:.78rem;opacity:.7">Esta ação não pode ser desfeita.</span>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
-      <button class="btn btn-danger" id="confirm-del-btn" onclick="confirmDelete()">Excluir</button>
-    </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <div class="toast" id="toast"></div>
 
-<script type="module" src="/ds/js/app.js"></script>
+  <script type="module" src="/ds/js/app.js"></script>
 </body>
+
 </html>

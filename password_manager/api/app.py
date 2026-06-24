@@ -43,8 +43,8 @@ def create_app() -> FastAPI:
         """Verifica se a API está operacional."""
         return {"status": "ok"}
 
-    app.include_router(router)
-    app.include_router(router_io)
+    app.include_router(router, prefix="/api")
+    app.include_router(router_io, prefix="/api")
 
     app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
     app.mount("/ds", StaticFiles(directory=str(_DS_DIR)), name="design-system")

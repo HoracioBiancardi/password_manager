@@ -145,6 +145,23 @@
   font-size: .8rem; font-weight: 700; color: #93c5fd; text-transform: uppercase;
 }
 
+/* ── Gerador de chave ────────────────────────────────────────────── */
+.keygen-key-box {
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(8,16,40,.7); border: 1px solid rgba(99,155,255,.25);
+  border-radius: 10px; padding: .75rem 1rem;
+}
+.keygen-key-box code {
+  flex: 1; font-family: 'SF Mono','Fira Code',Consolas,monospace;
+  font-size: .8rem; letter-spacing: .03em; color: #93c5fd;
+  word-break: break-all; line-height: 1.5;
+}
+.keygen-warning {
+  font-size: .72rem; color: #fbbf24; opacity: .85;
+  background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.18);
+  border-radius: 7px; padding: .45rem .75rem;
+}
+
 /* ── Contagem de registros ───────────────────────────────────────── */
 .count-badge {
   font-size: .65rem; background: rgba(255,255,255,.07);
