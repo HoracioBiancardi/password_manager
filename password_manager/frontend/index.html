@@ -3,231 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SWORDPOWER – Password Manager</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #050b18;
-      --glass: rgba(12, 22, 48, 0.72);
-      --glass-alt: rgba(8, 16, 36, 0.55);
-      --glass-input: rgba(6, 14, 32, 0.6);
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --primary-glow: rgba(59, 130, 246, 0.35);
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --success: #10b981;
-      --text: #e2e8f0;
-      --text-muted: #8ba3c7;
-      --border: rgba(99, 155, 255, 0.13);
-      --border-bright: rgba(99, 155, 255, 0.28);
-      --shadow: 0 4px 24px rgba(0,0,0,.5);
-      --shadow-md: 0 8px 40px rgba(0,0,0,.65);
-      --glow-ring: 0 0 0 3px rgba(59,130,246,.18);
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 14px;
-      overflow-x: hidden;
-    }
-
-    /* ── Background ─────────────────────────────────────────────────── */
-    #bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-    .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-    .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .45; animation: drift linear infinite; }
-    .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #1d4ed8 0%, transparent 70%); top: -15%; left: -10%; animation-duration: 22s; }
-    .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, #6d28d9 0%, transparent 70%); bottom: -10%; right: -5%; animation-duration: 28s; animation-direction: reverse; }
-    .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, #0e7490 0%, transparent 70%); top: 40%; left: 50%; animation-duration: 18s; }
-    .orb-4 { width: 350px; height: 350px; background: radial-gradient(circle, #be185d 0%, transparent 70%); top: 10%; right: 20%; animation-duration: 32s; animation-direction: reverse; opacity: .25; }
-    @keyframes drift {
-      0%   { transform: translate(0, 0) scale(1); }
-      33%  { transform: translate(40px, -30px) scale(1.07); }
-      66%  { transform: translate(-25px, 45px) scale(.95); }
-      100% { transform: translate(0, 0) scale(1); }
-    }
-
-    /* ── Glass ──────────────────────────────────────────────────────── */
-    .glass {
-      background: var(--glass);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.06);
-    }
-
-    /* ── Login ──────────────────────────────────────────────────────── */
-    #login-screen {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh;
-    }
-    .login-card { border-radius: 20px; padding: 2.75rem; width: 100%; max-width: 420px; animation: fadeUp .6s cubic-bezier(.16,1,.3,1) both; }
-    .login-brand { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.75rem; }
-    .login-brand .icon { width: 46px; height: 46px; background: linear-gradient(135deg, #3b82f6, #6d28d9); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.375rem; box-shadow: 0 4px 16px rgba(59,130,246,.4); }
-    .login-brand h1 { font-size: 1.375rem; font-weight: 700; }
-    .login-brand .subtitle { font-size: .8125rem; color: var(--text-muted); margin-top: .1rem; }
-    .divider { height: 1px; background: var(--border); margin-bottom: 1.5rem; }
-    .error-msg { color: var(--danger); font-size: .8125rem; margin-top: .375rem; margin-bottom: .75rem; display: none; padding: .5rem .75rem; background: rgba(239,68,68,.1); border-radius: 7px; border: 1px solid rgba(239,68,68,.25); }
-
-    /* ── Forms ──────────────────────────────────────────────────────── */
-    .field { margin-bottom: 1rem; }
-    .field label { display: block; font-weight: 500; font-size: .8125rem; margin-bottom: .4rem; color: var(--text-muted); letter-spacing: .02em; text-transform: uppercase; }
-    .field input, .field textarea {
-      width: 100%; padding: .6rem .875rem;
-      border: 1px solid var(--border); border-radius: 9px;
-      font-size: .875rem; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      background: var(--glass-input); color: var(--text); font-family: inherit;
-    }
-    .field input::placeholder, .field textarea::placeholder { color: rgba(139,163,199,.5); }
-    .field input:focus, .field textarea:focus { border-color: var(--primary); box-shadow: var(--glow-ring); animation: focusPulse .25s ease; }
-    .field textarea { resize: vertical; min-height: 72px; }
-    .pass-wrap { position: relative; }
-    .pass-wrap input { padding-right: 2.75rem; }
-    .eye-btn { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; line-height: 1; padding: .25rem; transition: color .15s; }
-    .eye-btn:hover { color: var(--text); }
-
-    /* ── Buttons ────────────────────────────────────────────────────── */
-    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.1rem; border-radius: 9px; font-size: .875rem; font-weight: 500; border: none; cursor: pointer; transition: background .15s, box-shadow .2s, transform .1s; white-space: nowrap; }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
-    .btn:active:not(:disabled) { transform: scale(.96); }
-    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; box-shadow: 0 4px 16px rgba(59,130,246,.3); position: relative; overflow: hidden; }
-    .btn-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.2) 50%, transparent 60%); background-size: 200% 100%; opacity: 0; transition: opacity .2s; }
-    .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 24px rgba(59,130,246,.5); }
-    .btn-primary:hover:not(:disabled)::after { opacity: 1; animation: shimmer .7s linear; }
-    .btn-ghost { background: rgba(255,255,255,.05); color: var(--text-muted); border: 1px solid var(--border); }
-    .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.09); color: var(--text); border-color: var(--border-bright); }
-    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,.3); }
-    .btn-danger:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(239,68,68,.45); }
-    .btn-icon { padding: .4rem .55rem; font-size: .9rem; }
-    .btn-full { width: 100%; justify-content: center; }
-
-    /* ── Dashboard ──────────────────────────────────────────────────── */
-    #dashboard { display: none; position: relative; z-index: 1; }
-    #dashboard.entering { animation: fadeIn .4s ease both; }
-
-    .topbar {
-      backdrop-filter: blur(28px) saturate(160%);
-      -webkit-backdrop-filter: blur(28px) saturate(160%);
-      background: rgba(5, 11, 30, 0.8);
-      border-bottom: 1px solid var(--border);
-      padding: .75rem 1.75rem;
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 10;
-      animation: slideDown .45s cubic-bezier(.16,1,.3,1) both;
-    }
-
-    /* ── Brand logo ─────────────────────────────────────────────────── */
-    .brand { display: flex; align-items: center; gap: .875rem; }
-    .brand-icon {
-      width: 38px; height: 38px;
-      background: linear-gradient(135deg, #1d4ed8, #6d28d9);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 18px rgba(59,130,246,.45), 0 0 6px rgba(109,40,217,.4);
-      flex-shrink: 0;
-    }
-    .brand-text { display: flex; flex-direction: column; line-height: 1; }
-    .brand-name {
-      font-size: 1.0625rem;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      background: linear-gradient(100deg, #93c5fd 0%, #c4b5fd 45%, #f9a8d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: none;
-    }
-    .brand-tagline {
-      font-size: .6rem;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-top: .25rem;
-      opacity: .75;
-    }
-
-    /* ── Main content ───────────────────────────────────────────────── */
-    .main-content { padding: 1.75rem; max-width: 1200px; margin: 0 auto; }
-
-    .toolbar { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
-    .search-wrap { flex: 1; position: relative; }
-    .search-wrap input {
-      width: 100%; padding: .6rem .875rem .6rem 2.5rem;
-      border: 1px solid var(--border); border-radius: 9px;
-      font-size: .875rem; outline: none;
-      background: var(--glass); backdrop-filter: blur(12px);
-      color: var(--text); transition: border-color .2s, box-shadow .2s;
-    }
-    .search-wrap input::placeholder { color: rgba(139,163,199,.5); }
-    .search-wrap input:focus { border-color: var(--primary); box-shadow: var(--glow-ring); }
-    .search-icon { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: .9rem; }
-
-    /* ── Passwords table ────────────────────────────────────────────── */
-    .table-card { border-radius: 14px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; }
-    thead th { background: var(--glass-alt); backdrop-filter: blur(12px); padding: .7rem 1rem; text-align: left; font-size: .675rem; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-    tbody td { padding: .9rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--glass); backdrop-filter: blur(20px); transition: background .15s; }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody tr:hover td { background: rgba(59,130,246,.06); }
-    tbody tr { animation: fadeUp .3s cubic-bezier(.16,1,.3,1) both; }
-    .service-name { font-weight: 600; }
-    .url-link { color: #60a5fa; text-decoration: none; font-size: .8125rem; max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-    .url-link:hover { color: #93c5fd; text-decoration: underline; }
-    .dash { color: rgba(139,163,199,.4); }
-    .senha-wrap { display: flex; align-items: center; gap: .375rem; }
-    .senha-val { font-family: 'SF Mono', 'Fira Code', monospace; letter-spacing: .05em; font-size: .82rem; }
-    .obs-cell { max-width: 200px; }
-    .obs-text { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .8125rem; color: var(--text-muted); line-height: 1.4; }
-    .row-actions { display: flex; gap: .25rem; }
-
-    /* ── Pagination ─────────────────────────────────────────────────── */
-    .pagination { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; border-top: 1px solid var(--border); background: var(--glass-alt); backdrop-filter: blur(12px); }
-    .pagination-info { font-size: .8125rem; color: var(--text-muted); }
-    .pagination-controls { display: flex; gap: .25rem; align-items: center; }
-    .page-btn { min-width: 2rem; height: 2rem; padding: 0 .5rem; border-radius: 7px; font-size: .8125rem; font-weight: 500; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--text); cursor: pointer; transition: background .15s, border-color .15s, transform .1s; display: inline-flex; align-items: center; justify-content: center; }
-    .page-btn:hover:not(:disabled):not(.active) { background: rgba(59,130,246,.12); border-color: var(--border-bright); }
-    .page-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; box-shadow: 0 2px 10px rgba(59,130,246,.4); }
-    .page-btn:disabled { opacity: .3; cursor: not-allowed; }
-    .page-btn:active:not(:disabled) { transform: scale(.9); }
-
-    .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); }
-    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: .75rem; }
-
-    /* ── Modal ──────────────────────────────────────────────────────── */
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 20, .65); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 40; padding: 1rem; }
-    .overlay.open { display: flex; animation: fadeIn .2s ease both; }
-    .modal { border-radius: 18px; padding: 1.875rem; width: 100%; max-width: 480px; animation: modalPop .32s cubic-bezier(.16,1,.3,1) both; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.375rem; }
-    .modal-header h2 { font-size: 1.0625rem; font-weight: 700; background: linear-gradient(135deg, #e2e8f0, #93c5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .close-btn { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; font-size: 1rem; color: var(--text-muted); padding: .3rem .5rem; transition: background .15s, color .15s; }
-    .close-btn:hover { background: rgba(255,255,255,.1); color: var(--text); }
-    .modal-footer { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.625rem; }
-
-    /* ── Toast ──────────────────────────────────────────────────────── */
-    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: .8rem 1.25rem; border-radius: 11px; font-size: .875rem; font-weight: 500; color: #fff; box-shadow: var(--shadow-md); opacity: 0; transform: translateY(10px) scale(.97); transition: opacity .3s, transform .3s cubic-bezier(.16,1,.3,1); pointer-events: none; z-index: 100; backdrop-filter: blur(12px); }
-    .toast.visible { opacity: 1; transform: translateY(0) scale(1); }
-    .toast.success { background: rgba(16,185,129,.85); border: 1px solid rgba(16,185,129,.3); }
-    .toast.error   { background: rgba(239,68,68,.85);  border: 1px solid rgba(239,68,68,.3); }
-
-    /* ── Spinner ────────────────────────────────────────────────────── */
-    .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
-
-    /* ── Keyframes ──────────────────────────────────────────────────── */
-    @keyframes spin      { to { transform: rotate(360deg); } }
-    @keyframes shimmer   { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-    @keyframes fadeUp    { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes modalPop  { from { opacity: 0; transform: scale(.92) translateY(18px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-    @keyframes focusPulse { 0% { box-shadow: 0 0 0 0 rgba(59,130,246,.4); } 60% { box-shadow: 0 0 0 6px rgba(59,130,246,.12); } 100% { box-shadow: 0 0 0 3px rgba(59,130,246,.18); } }
-  </style>
+  <title>PM Vault</title>
+  <link rel="stylesheet" href="/static/css/design-system.css">
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
 
@@ -240,387 +18,169 @@
 </div>
 
 <!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
-<div id="login-screen">
-  <div class="login-card glass">
+<div class="overlay login-overlay" id="login-overlay">
+  <div class="modal glass login-modal">
     <div class="login-brand">
-      <div class="icon">🔐</div>
+      <div class="login-icon">🔐</div>
       <div>
-        <h1>Password Manager</h1>
-        <div class="subtitle">Digite sua Chave Mestre para acessar</div>
+        <div class="login-title">PM Vault</div>
+        <div class="login-sub">Gerenciador de Senhas</div>
       </div>
     </div>
-    <div class="divider"></div>
-    <div class="field">
-      <label for="inp-key">Chave Mestre</label>
-      <div class="pass-wrap">
-        <input id="inp-key" type="password" placeholder="Cole sua chave Fernet aqui" autocomplete="off">
-        <button class="eye-btn" onclick="toggleEye('inp-key', this)">👁</button>
+
+    <div class="form-group">
+      <label class="form-label" for="master-key-input">Chave Mestre</label>
+      <div class="pw-wrap">
+        <input id="master-key-input" type="password" class="form-input"
+          placeholder="Cole sua chave Fernet…" autocomplete="off"
+          onkeydown="if(event.key==='Enter') login()">
+        <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">👁</button>
       </div>
+      <p class="form-hint">Usada apenas para descriptografar o cofre. Não é armazenada em disco.</p>
     </div>
-    <p id="login-error" class="error-msg">Chave inválida ou arquivo corrompido.</p>
-    <button id="unlock-btn" class="btn btn-primary btn-full" onclick="unlock()">Desbloquear</button>
+
+    <div class="modal-footer" style="padding-top:.25rem">
+      <button class="btn btn-primary" id="login-btn" onclick="login()"
+        style="width:100%;justify-content:center;padding:.65rem">
+        🔓 Desbloquear
+      </button>
+    </div>
   </div>
 </div>
 
-<!-- ── DASHBOARD ───────────────────────────────────────────────────────── -->
-<div id="dashboard">
-  <div class="topbar">
-    <div class="brand">
-      <div class="brand-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M14.5 2L21 8.5L9 20.5L3 21L3.5 15L14.5 2Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M14.5 2L18 5.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M3.5 15L8 14" stroke="rgba(255,255,255,0.6)" stroke-width="1.4" stroke-linecap="round"/>
-          <circle cx="20" cy="4" r="1.5" fill="rgba(196,181,253,0.9)"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">Swordpower</span>
-        <span class="brand-tagline">Password Manager</span>
-      </div>
+<!-- ── TOPBAR ──────────────────────────────────────────────────────────── -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" stroke-width="1.8"/>
+        <path d="M8 11V7a4 4 0 018 0v4" stroke="rgba(196,181,253,.8)" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="16" r="1.5" fill="rgba(255,255,255,.7)"/>
+      </svg>
     </div>
-    <div style="display:flex;gap:.5rem;align-items:center">
-      <button class="btn btn-ghost" onclick="exportar()" title="Exportar backup JSON">⬇ Exportar</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('file-import').click()" title="Importar backup JSON">⬆ Importar</button>
-      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importar(this)">
-      <button class="btn btn-ghost" onclick="logout()">🔒 Bloquear</button>
+    <div class="brand-text">
+      <span class="brand-name">PM Vault</span>
+      <span class="brand-tagline">Gerenciador de Senhas</span>
     </div>
   </div>
+  <div class="topbar-right">
+    <span id="conn-badge" class="conn-badge">● offline</span>
+    <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup JSON">⬇ Exportar</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
+  </div>
+</div>
 
-  <!-- ── SENHAS ────────────────────────────────────────────────────── -->
-  <div class="main-content">
-    <div class="toolbar">
+<!-- ── APP ────────────────────────────────────────────────────────────── -->
+<div class="app-layout" id="app-layout" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar glass">
+    <div class="sidebar-top">
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input id="inp-search" type="text" placeholder="Buscar por serviço, URL ou e-mail…" oninput="onSearchSenhas(this.value)">
+        <input type="text" placeholder="Buscar serviço, e-mail, URL…"
+          oninput="onSearch(this.value)" autocomplete="off">
       </div>
-      <button class="btn btn-primary" onclick="openSenhaModal()">+ Adicionar</button>
-    </div>
-    <div class="table-card glass">
-      <table>
-        <thead>
-          <tr>
-            <th>Serviço</th><th>URL</th><th>E-mail / Usuário</th>
-            <th>Senha</th><th>Observação</th><th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="creds-body"></tbody>
-      </table>
-      <div class="pagination" id="pagination" style="display:none">
-        <span class="pagination-info" id="page-info"></span>
-        <div class="pagination-controls" id="page-controls"></div>
+      <div class="sidebar-actions" style="margin-top:.5rem">
+        <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
+        <span class="count-badge" id="cred-count">0</span>
       </div>
     </div>
-  </div>
+
+    <div id="cred-list" class="list-items">
+      <div class="list-empty"><div class="ei">⏳</div>Carregando…</div>
+    </div>
+
+    <div class="sidebar-footer" id="sidebar-footer">–</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-panel">
+
+    <!-- Estado vazio -->
+    <div id="empty-panel" class="empty-panel">
+      <div class="empty-state">
+        <div class="empty-icon">🔑</div>
+        <p>Selecione uma credencial ou crie uma nova</p>
+        <div class="empty-hint">Todas as senhas são criptografadas com Fernet</div>
+      </div>
+    </div>
+
+    <!-- Painel de visualização -->
+    <div id="cred-view-panel" class="cred-panel" style="display:none">
+      <div class="cred-panel-header">
+        <span id="view-title" class="cred-panel-title"></span>
+        <div class="cred-panel-actions">
+          <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" id="view-del-btn" onclick="">🗑 Excluir</button>
+        </div>
+      </div>
+      <div id="view-fields" class="cred-panel-body"></div>
+    </div>
+
+    <!-- Painel de formulário (nova / edição) -->
+    <div id="cred-form-panel" class="cred-panel" style="display:none;flex-direction:column">
+      <div class="cred-panel-header">
+        <span id="form-title-label" class="cred-panel-title">Nova Credencial</span>
+      </div>
+
+      <div class="cred-form">
+        <div class="form-group">
+          <label class="form-label" for="f-nome">Serviço / Nome *</label>
+          <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-url">URL</label>
+          <input id="f-url" type="text" class="form-input" placeholder="https://…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-email">E-mail *</label>
+          <input id="f-email" type="email" class="form-input" placeholder="usuario@dominio.com" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-senha">Senha *</label>
+          <div class="pw-wrap">
+            <input id="f-senha" type="password" class="form-input"
+              placeholder="••••••••" autocomplete="new-password">
+            <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-obs">Observação</label>
+          <textarea id="f-obs" class="form-input form-textarea"
+            placeholder="Notas adicionais…"></textarea>
+        </div>
+      </div>
+
+      <div class="cred-form-footer">
+        <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
+        <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
+      </div>
+    </div>
+
+  </main>
 </div>
 
-<!-- ── MODAL SENHA ─────────────────────────────────────────────────────── -->
-<div class="overlay" id="senha-overlay">
+<!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->
+<div class="overlay" id="delete-overlay">
   <div class="modal glass">
     <div class="modal-header">
-      <h2 id="senha-modal-title">Adicionar Credencial</h2>
-      <button class="close-btn" onclick="closeSenhaModal()">✕</button>
+      <h2>Excluir credencial</h2>
+      <button class="close-btn" onclick="closeDeleteModal()">✕</button>
     </div>
-    <div class="field"><label>Serviço *</label><input id="f-nome" type="text" placeholder="Github"></div>
-    <div class="field"><label>URL</label><input id="f-url" type="text" placeholder="https://github.com"></div>
-    <div class="field"><label>E-mail ou Usuário *</label><input id="f-email" type="text" placeholder="voce@email.com" autocomplete="off"></div>
-    <div class="field">
-      <label>Senha *</label>
-      <div class="pass-wrap">
-        <input id="f-senha" type="password" placeholder="Senha" autocomplete="new-password">
-        <button class="eye-btn" onclick="toggleEye('f-senha', this)">👁</button>
-      </div>
+    <div class="modal-body">
+      Deseja excluir permanentemente <strong id="del-name"></strong>?<br>
+      <span style="font-size:.78rem;opacity:.7">Esta ação não pode ser desfeita.</span>
     </div>
-    <div class="field"><label>Observação</label><textarea id="f-obs" placeholder="Notas, dicas de recuperação, contexto…"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeSenhaModal()">Cancelar</button>
-      <button id="save-senha-btn" class="btn btn-primary" onclick="salvarSenha()">Salvar</button>
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-del-btn" onclick="confirmDelete()">Excluir</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>
-  // ── Particle canvas ────────────────────────────────────────────────────
-  (function () {
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    const N = 85, MAX = 140;
-    let P = [], W, H;
-    function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
-    function rnd(a, b) { return Math.random() * (b - a) + a; }
-    function mk() { return { x: rnd(0,W), y: rnd(0,H), vx: rnd(-.3,.3), vy: rnd(-.3,.3), r: rnd(1.2,2.5) }; }
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-      for (let i = 0; i < P.length; i++) {
-        for (let j = i+1; j < P.length; j++) {
-          const dx = P[i].x-P[j].x, dy = P[i].y-P[j].y, d = Math.hypot(dx,dy);
-          if (d < MAX) { ctx.beginPath(); ctx.strokeStyle=`rgba(99,155,255,${(1-d/MAX)*.22})`; ctx.lineWidth=.8; ctx.moveTo(P[i].x,P[i].y); ctx.lineTo(P[j].x,P[j].y); ctx.stroke(); }
-        }
-      }
-      for (const p of P) {
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='rgba(120,170,255,0.55)'; ctx.fill();
-        p.x+=p.vx; p.y+=p.vy;
-        if(p.x<-10) p.x=W+10; if(p.x>W+10) p.x=-10;
-        if(p.y<-10) p.y=H+10; if(p.y>H+10) p.y=-10;
-      }
-      requestAnimationFrame(draw);
-    }
-    window.addEventListener('resize', resize);
-    resize(); P = Array.from({length:N},mk); draw();
-  })();
-
-  // ── State ──────────────────────────────────────────────────────────────
-  const PAGE_SIZE = 10;
-  let masterKey = '';
-  let creds = [], allCreds = [], currentPage = 1;
-  let editSenhaTarget = null;
-  let searchSenhaTimer = null;
-
-  // ── API ────────────────────────────────────────────────────────────────
-  function req(method, path, body) {
-    return fetch(path, {
-      method,
-      headers: { 'x-master-key': masterKey, ...(body ? {'content-type':'application/json'} : {}) },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  }
-
-  // ── Auth ───────────────────────────────────────────────────────────────
-  async function unlock() {
-    const key = document.getElementById('inp-key').value.trim();
-    if (!key) return;
-    const btn = document.getElementById('unlock-btn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verificando…';
-    masterKey = key;
-    try {
-      const r = await req('GET', '/credenciais/');
-      if (r.ok) {
-        document.getElementById('login-error').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'none';
-        const dash = document.getElementById('dashboard');
-        dash.style.display = 'block';
-        dash.classList.add('entering');
-        dash.addEventListener('animationend', () => dash.classList.remove('entering'), {once:true});
-        renderSenhas(await r.json());
-      } else {
-        masterKey = '';
-        document.getElementById('login-error').style.display = 'block';
-      }
-    } catch {
-      masterKey = '';
-      document.getElementById('login-error').textContent = 'Não foi possível conectar à API.';
-      document.getElementById('login-error').style.display = 'block';
-    } finally { btn.disabled = false; btn.textContent = 'Desbloquear'; }
-  }
-
-  function logout() {
-    masterKey = ''; creds = [];
-    document.getElementById('inp-key').value = '';
-    document.getElementById('inp-search').value = '';
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-  }
-
-  // ── Senhas ─────────────────────────────────────────────────────────────
-  async function loadSenhas() {
-    const r = await req('GET', '/credenciais/');
-    if (r.ok) renderSenhas(await r.json());
-  }
-
-  function onSearchSenhas(v) {
-    clearTimeout(searchSenhaTimer);
-    searchSenhaTimer = setTimeout(async () => {
-      const t = v.trim();
-      const r = await req('GET', t ? `/credenciais/buscar?termo=${encodeURIComponent(t)}` : '/credenciais/');
-      if (r.ok) renderSenhas(await r.json());
-    }, 280);
-  }
-
-  function renderSenhas(list, resetPage = true) {
-    allCreds = list;
-    if (resetPage) currentPage = 1;
-    const totalPages = Math.max(1, Math.ceil(allCreds.length / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
-    const start = (currentPage - 1) * PAGE_SIZE;
-    creds = allCreds.slice(start, start + PAGE_SIZE);
-
-    const tbody = document.getElementById('creds-body');
-    const pag = document.getElementById('pagination');
-
-    if (!allCreds.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="background:var(--glass);backdrop-filter:blur(20px)"><div class="empty-state"><div class="empty-icon">🔎</div><div>Nenhuma credencial encontrada.</div></div></td></tr>`;
-      pag.style.display = 'none'; return;
-    }
-
-    tbody.innerHTML = creds.map((c, i) => `
-      <tr style="animation-delay:${i*45}ms">
-        <td><span class="service-name">${esc(c.nome)}</span></td>
-        <td>${c.url ? `<a class="url-link" href="${esc(c.url)}" target="_blank" title="${esc(c.url)}">${esc(c.url)}</a>` : `<span class="dash">—</span>`}</td>
-        <td>${esc(c.email)}</td>
-        <td><div class="senha-wrap">
-          <span class="senha-val" data-val="${esc(c.senha)}" data-visible="false">••••••••</span>
-          <button class="btn btn-ghost btn-icon" title="Mostrar/Ocultar" onclick="toggleSenha(this)">👁</button>
-          <button class="btn btn-ghost btn-icon" title="Copiar senha" onclick="copiar(this,${i})">📋</button>
-        </div></td>
-        <td class="obs-cell">${c.observacao ? `<span class="obs-text" title="${esc(c.observacao)}">${esc(c.observacao)}</span>` : `<span class="dash">—</span>`}</td>
-        <td><div class="row-actions">
-          <button class="btn btn-ghost btn-icon" onclick="openSenhaModal(${i})">✏️</button>
-          <button class="btn btn-danger btn-icon" onclick="removerSenha(${i})">🗑️</button>
-        </div></td>
-      </tr>`).join('');
-    renderPagination(totalPages);
-  }
-
-  function renderPagination(totalPages) {
-    const pag = document.getElementById('pagination');
-    if (totalPages <= 1) { pag.style.display = 'none'; return; }
-    pag.style.display = 'flex';
-    const start = (currentPage-1)*PAGE_SIZE+1, end = Math.min(currentPage*PAGE_SIZE, allCreds.length);
-    document.getElementById('page-info').textContent = `${start}–${end} de ${allCreds.length}`;
-    const pages = pageRange(currentPage, totalPages);
-    document.getElementById('page-controls').innerHTML = `
-      <button class="page-btn" onclick="goToPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#8249;</button>
-      ${pages.map(p => p==='…' ? `<span class="page-btn" style="cursor:default;border:none;background:none">…</span>` : `<button class="page-btn ${p===currentPage?'active':''}" onclick="goToPage(${p})">${p}</button>`).join('')}
-      <button class="page-btn" onclick="goToPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>&#8250;</button>`;
-  }
-
-  function pageRange(cur, tot) {
-    if (tot<=7) return Array.from({length:tot},(_,i)=>i+1);
-    if (cur<=4) return [1,2,3,4,5,'…',tot];
-    if (cur>=tot-3) return [1,'…',tot-4,tot-3,tot-2,tot-1,tot];
-    return [1,'…',cur-1,cur,cur+1,'…',tot];
-  }
-
-  function goToPage(p) { currentPage=p; renderSenhas(allCreds,false); document.querySelector('.table-card').scrollIntoView({behavior:'smooth',block:'start'}); }
-
-  // Senha modal
-  function openSenhaModal(idx = null) {
-    const c = idx !== null ? creds[idx] : null;
-    editSenhaTarget = c ? {nome:c.nome, email:c.email} : null;
-    document.getElementById('senha-modal-title').textContent = c ? 'Editar Credencial' : 'Adicionar Credencial';
-    document.getElementById('f-nome').value  = c?.nome       ?? '';
-    document.getElementById('f-url').value   = c?.url        ?? '';
-    document.getElementById('f-email').value = c?.email      ?? '';
-    document.getElementById('f-senha').value = c?.senha      ?? '';
-    document.getElementById('f-obs').value   = c?.observacao ?? '';
-    document.getElementById('senha-overlay').classList.add('open');
-    document.getElementById('f-nome').focus();
-  }
-
-  function closeSenhaModal() { document.getElementById('senha-overlay').classList.remove('open'); editSenhaTarget = null; }
-
-  async function salvarSenha() {
-    const nome=document.getElementById('f-nome').value.trim(), url=document.getElementById('f-url').value.trim(),
-          email=document.getElementById('f-email').value.trim(), senha=document.getElementById('f-senha').value,
-          observacao=document.getElementById('f-obs').value.trim();
-    if (!nome||!email||!senha) { toast('Serviço, e-mail e senha são obrigatórios.','error'); return; }
-    const btn = document.getElementById('save-senha-btn');
-    btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
-    try {
-      const r = editSenhaTarget
-        ? await req('PATCH','/credenciais/',{nome_atual:editSenhaTarget.nome,email_atual:editSenhaTarget.email,nome,url,email,senha,observacao})
-        : await req('POST', '/credenciais/',{nome,url,email,senha,observacao});
-      if (r.ok) { closeSenhaModal(); toast(editSenhaTarget?'Credencial atualizada.':'Credencial adicionada.','success'); document.getElementById('inp-search').value=''; await loadSenhas(); }
-      else { const e=await r.json(); toast(e.detail||'Erro ao salvar.','error'); }
-    } finally { btn.disabled=false; btn.textContent='Salvar'; }
-  }
-
-  async function removerSenha(idx) {
-    const c = creds[idx];
-    if (!confirm(`Remover "${c.nome}" (${c.email})?`)) return;
-    const r = await req('DELETE',`/credenciais/?nome=${encodeURIComponent(c.nome)}&email=${encodeURIComponent(c.email)}`);
-    if (r.ok) { toast('Credencial removida.','success'); await loadSenhas(); }
-    else toast('Erro ao remover.','error');
-  }
-
-  // ── UI helpers ─────────────────────────────────────────────────────────
-  function toggleSenha(btn) {
-    const span = btn.closest('.senha-wrap').querySelector('.senha-val');
-    const v = span.dataset.visible === 'true';
-    span.textContent = v ? '••••••••' : span.dataset.val;
-    span.dataset.visible = v ? 'false' : 'true';
-    btn.textContent = v ? '👁' : '🙈';
-  }
-
-  async function copiar(btn, idx) {
-    await navigator.clipboard.writeText(creds[idx].senha);
-    const orig = btn.textContent; btn.textContent = '✅';
-    setTimeout(() => btn.textContent = orig, 1500);
-  }
-
-  function toggleEye(id, btn) {
-    const el = document.getElementById(id);
-    el.type = el.type === 'password' ? 'text' : 'password';
-    btn.textContent = el.type === 'password' ? '👁' : '🙈';
-  }
-
-  function esc(s) {
-    return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  let toastTimer;
-  function toast(msg, type='success') {
-    const el = document.getElementById('toast');
-    el.textContent = msg; el.className = `toast ${type} visible`;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('visible'), 3200);
-  }
-
-  // ── Export / Import ────────────────────────────────────────────────────
-  async function exportar() {
-    try {
-      const r = await req('GET', '/io/export');
-      if (!r.ok) { toast('Erro ao exportar.', 'error'); return; }
-      const blob = new Blob([JSON.stringify(await r.json(), null, 2)], { type: 'application/json' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      const ts   = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
-      a.href = url; a.download = `pm-backup-${ts}.json`;
-      a.click(); URL.revokeObjectURL(url);
-      toast('Backup exportado com sucesso.', 'success');
-    } catch { toast('Erro ao exportar.', 'error'); }
-  }
-
-  async function importar(input) {
-    const file = input.files[0];
-    input.value = '';
-    if (!file) return;
-
-    let payload;
-    try {
-      payload = JSON.parse(await file.text());
-    } catch {
-      toast('Arquivo inválido — não é um JSON válido.', 'error');
-      return;
-    }
-
-    const senhasQtd = payload.senhas?.length ?? 0;
-    if (!confirm(`Importar ${senhasQtd} senha(s)?\nDuplicatas serão ignoradas.`)) return;
-
-    try {
-      const r = await req('POST', '/io/import', {
-        version: payload.version ?? 1,
-        senhas:  payload.senhas  ?? [],
-        notas:   [],
-      });
-      if (!r.ok) { const e = await r.json(); toast(e.detail || 'Erro ao importar.', 'error'); return; }
-      const res = await r.json();
-      toast(
-        `Importado: ${res.senhas_importadas} senha(s). ` +
-        `Ignorados: ${res.senhas_ignoradas} duplicata(s).`,
-        'success'
-      );
-      await loadSenhas();
-    } catch { toast('Erro ao importar.', 'error'); }
-  }
-
-  // ── Keyboard ───────────────────────────────────────────────────────────
-  document.getElementById('inp-key').addEventListener('keydown', e => { if(e.key==='Enter') unlock(); });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeSenhaModal();
-  });
-</script>
+<script type="module" src="/static/js/app.js"></script>
 </body>
 </html>

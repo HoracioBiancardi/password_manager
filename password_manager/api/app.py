@@ -5,11 +5,12 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from .routes import router
 from .routes_io import router as router_io
 
-_FRONTEND = Path(__file__).parent.parent / "frontend" / "index.html"
+_FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 
 def create_app() -> FastAPI:
@@ -34,7 +35,7 @@ def create_app() -> FastAPI:
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def frontend() -> HTMLResponse:
         """Serve a interface web de gestão de senhas."""
-        return HTMLResponse(_FRONTEND.read_text(encoding="utf-8"))
+        return HTMLResponse((_FRONTEND_DIR / "index.html").read_text(encoding="utf-8"))
 
     @app.get("/health", tags=["sistema"])
     def health() -> dict[str, str]:
@@ -43,6 +44,8 @@ def create_app() -> FastAPI:
 
     app.include_router(router)
     app.include_router(router_io)
+
+    app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR / "static")), name="static")
     return app
 
 
