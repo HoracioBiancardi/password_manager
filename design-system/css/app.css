@@ -76,7 +76,7 @@
 .cred-panel-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: .9rem 1.25rem; border-bottom: 1px solid var(--border);
-  background: rgba(5,11,30,.4); flex-shrink: 0;
+  background: var(--surface); flex-shrink: 0;
 }
 .cred-panel-title {
   font-size: 1.1rem; font-weight: 700; min-width: 0;
@@ -93,10 +93,12 @@
 
 /* ── Field row (modo leitura) ────────────────────────────────────── */
 .field-row {
-  background: rgba(8,16,40,.6); border: 1px solid var(--border);
-  border-radius: 10px; padding: .7rem 1rem;
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: .7rem 1rem;
   display: flex; align-items: center; gap: .75rem;
+  transition: border-color var(--t-fast);
 }
+.field-row:hover { border-color: var(--border-bright); }
 .field-row-icon { font-size: 1rem; flex-shrink: 0; opacity: .7; }
 .field-row-body { flex: 1; min-width: 0; }
 .field-row-label {
@@ -122,44 +124,67 @@
 .copy-btn:hover { background: rgba(59,130,246,.12); color: var(--primary); border-color: rgba(59,130,246,.3); }
 .copy-btn.copied { color: var(--success); border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.08); }
 
-/* ── Formulário de edição / nova credencial ──────────────────────── */
-.cred-form {
-  flex: 1; overflow-y: auto; padding: 1.25rem;
-  display: flex; flex-direction: column; gap: .9rem;
-}
-.cred-form::-webkit-scrollbar { width: 4px; }
-.cred-form::-webkit-scrollbar-thumb { background: rgba(99,155,255,.2); border-radius: 2px; }
+/* ── Detail modal ────────────────────────────────────────────────── */
+.detail-modal { max-width: 520px; }
 
-.cred-form-footer {
-  display: flex; gap: .5rem; padding: .75rem 1.25rem;
-  border-top: 1px solid var(--border); background: rgba(5,11,30,.4);
-  flex-shrink: 0;
+.detail-header-actions {
+  display: flex; gap: .4rem; align-items: center; flex-shrink: 0;
 }
+
+.detail-body {
+  display: flex; flex-direction: column; gap: .6rem;
+  margin-top: 1rem; max-height: 60vh; overflow-y: auto;
+  padding-right: .25rem;
+}
+.detail-body::-webkit-scrollbar { width: 4px; }
+.detail-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Form modal ──────────────────────────────────────────────────── */
+.form-modal { max-width: 480px; }
+
+.form-modal .cred-form {
+  padding: 1rem 0 .25rem; display: flex; flex-direction: column; gap: .9rem;
+  max-height: 60vh; overflow-y: auto; padding-right: .25rem;
+}
+.form-modal .cred-form::-webkit-scrollbar { width: 4px; }
+.form-modal .cred-form::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── Sidebar — credencial item ───────────────────────────────────── */
 .cred-icon {
-  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(59,130,246,.25), rgba(109,40,217,.25));
-  border: 1px solid rgba(99,155,255,.2);
+  width: 30px; height: 30px; border-radius: var(--r-md); flex-shrink: 0;
+  background: var(--primary-dim);
+  border: 1px solid var(--primary-glow);
   display: flex; align-items: center; justify-content: center;
-  font-size: .8rem; font-weight: 700; color: #93c5fd; text-transform: uppercase;
+  font-size: .8rem; font-weight: 700; color: var(--primary); text-transform: uppercase;
 }
 
 /* ── Gerador de chave ────────────────────────────────────────────── */
 .keygen-key-box {
   display: flex; align-items: center; gap: .5rem;
-  background: rgba(8,16,40,.7); border: 1px solid rgba(99,155,255,.25);
-  border-radius: 10px; padding: .75rem 1rem;
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: .75rem 1rem;
 }
 .keygen-key-box code {
   flex: 1; font-family: 'SF Mono','Fira Code',Consolas,monospace;
-  font-size: .8rem; letter-spacing: .03em; color: #93c5fd;
+  font-size: .78rem; letter-spacing: .03em; color: var(--primary);
   word-break: break-all; line-height: 1.5;
 }
 .keygen-warning {
-  font-size: .72rem; color: #fbbf24; opacity: .85;
-  background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.18);
-  border-radius: 7px; padding: .45rem .75rem;
+  font-size: .72rem; color: var(--warn);
+  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.2);
+  border-radius: var(--r-md); padding: .45rem .75rem;
+}
+
+/* ── Botão de cofre novo (aparece em erro 401 com chave nova) ────── */
+.btn-vault-reset {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid rgba(248,81,73,.25);
+  width: 100%; justify-content: center; font-size: .78rem;
+}
+.btn-vault-reset:hover:not(:disabled) {
+  background: rgba(248,81,73,.18);
+  border-color: rgba(248,81,73,.45);
 }
 
 /* ── Contagem de registros ───────────────────────────────────────── */

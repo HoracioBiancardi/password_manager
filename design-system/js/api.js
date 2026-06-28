@@ -51,3 +51,15 @@ export async function exportar() {
   const fn = cd.match(/filename="([^"]+)"/)?.[1] || 'pm-backup.json';
   return { blob, filename: fn };
 }
+
+export async function importar(payload) {
+  const r = await apiFetch('/io/import', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return r.json();
+}
+
+export async function resetVault() {
+  await apiFetch('/io/vault', { method: 'DELETE' });
+}

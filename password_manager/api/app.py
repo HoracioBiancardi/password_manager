@@ -58,4 +58,4 @@ def start() -> None:
     """Ponto de entrada para iniciar o servidor via script pm-api."""
     import uvicorn
 
-    uvicorn.run("password_manager.api.app:app", host="127.0.0.1", port=8000)
+    uvicorn.run("password_manager.api.app:app", host="127.0.0.1", port=8080)

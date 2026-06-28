@@ -8,4 +8,5 @@ export const st = {
   isNew: false,
   searchQuery: '',
   pendingDelete: null,
+  freshKey: false,   // true quando a chave veio do gerador (não do vault existente)
 };

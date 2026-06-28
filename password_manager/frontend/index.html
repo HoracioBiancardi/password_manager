@@ -49,6 +49,10 @@
           style="width:100%;justify-content:center;font-size:.78rem">
           ✨ Gerar nova Chave Mestre
         </button>
+        <button class="btn btn-vault-reset" id="new-vault-btn" onclick="createNewVault()"
+          style="display:none">
+          🗑 Criar cofre vazio (apaga todos os dados)
+        </button>
       </div>
     </div>
   </div>
@@ -103,6 +107,8 @@
     <div class="topbar-right">
       <span id="conn-badge" class="conn-badge">● offline</span>
       <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup JSON">⬇ Exportar</button>
+      <button class="btn btn-ghost btn-sm" onclick="doImport()" title="Importar backup JSON">⬆ Importar</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="onImportFile(this)">
       <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
     </div>
   </div>
@@ -110,92 +116,81 @@
   <!-- ── APP ────────────────────────────────────────────────────────────── -->
   <div class="app-layout" id="app-layout" style="display:none">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar glass">
-      <div class="sidebar-top">
-        <div class="search-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar serviço, e-mail, URL…" oninput="onSearch(this.value)"
-            autocomplete="off">
+    <div class="vault-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar serviço, e-mail, URL…" oninput="onSearch(this.value)"
+          autocomplete="off">
+      </div>
+      <div class="toolbar-right">
+        <span class="count-badge" id="cred-count" hidden>0</span>
+        <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
+      </div>
+    </div>
+
+    <div id="cred-list" class="vault-list">
+      <div class="list-empty">
+        <div class="ei">⏳</div>Carregando…
+      </div>
+    </div>
+
+    <div class="vault-footer" id="sidebar-footer">–</div>
+  </div>
+
+  <!-- ── DETAIL MODAL ──────────────────────────────────────────────────── -->
+  <div class="overlay" id="detail-overlay">
+    <div class="modal glass detail-modal">
+      <div class="modal-header">
+        <h2 id="detail-title"></h2>
+        <div class="detail-header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" id="detail-del-btn">🗑 Excluir</button>
+          <button class="close-btn" onclick="closeDetailModal()">✕</button>
         </div>
-        <div class="sidebar-actions" style="margin-top:.5rem">
-          <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
-          <span class="count-badge" id="cred-count" hidden>0</span>
+      </div>
+      <div id="detail-fields" class="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- ── FORM MODAL ────────────────────────────────────────────────────── -->
+  <div class="overlay" id="form-overlay">
+    <div class="modal glass form-modal">
+      <div class="modal-header">
+        <h2 id="form-title-label">Nova Credencial</h2>
+        <button class="close-btn" onclick="cancelForm()">✕</button>
+      </div>
+
+      <div class="cred-form">
+        <div class="form-group">
+          <label class="form-label" for="f-nome">Serviço / Nome *</label>
+          <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-url">URL</label>
+          <input id="f-url" type="text" class="form-input" placeholder="https://…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-email">E-mail *</label>
+          <input id="f-email" type="email" class="form-input" placeholder="usuario@dominio.com" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-senha">Senha *</label>
+          <div class="pw-wrap">
+            <input id="f-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password">
+            <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-obs">Observação</label>
+          <textarea id="f-obs" class="form-input form-textarea" placeholder="Notas adicionais…"></textarea>
         </div>
       </div>
 
-      <div id="cred-list" class="list-items">
-        <div class="list-empty">
-          <div class="ei">⏳</div>Carregando…
-        </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
       </div>
-
-      <div class="sidebar-footer" id="sidebar-footer">–</div>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="main-panel">
-
-      <!-- Estado vazio -->
-      <div id="empty-panel" class="empty-panel">
-        <div class="empty-state">
-          <div class="empty-icon">🔑</div>
-          <p>Selecione uma credencial ou crie uma nova</p>
-          <div class="empty-hint">Todas as senhas são criptografadas com Fernet</div>
-        </div>
-      </div>
-
-      <!-- Painel de visualização -->
-      <div id="cred-view-panel" class="cred-panel" style="display:none">
-        <div class="cred-panel-header">
-          <span id="view-title" class="cred-panel-title"></span>
-          <div class="cred-panel-actions">
-            <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
-            <button class="btn btn-danger btn-sm" id="view-del-btn" onclick="">🗑 Excluir</button>
-          </div>
-        </div>
-        <div id="view-fields" class="cred-panel-body"></div>
-      </div>
-
-      <!-- Painel de formulário (nova / edição) -->
-      <div id="cred-form-panel" class="cred-panel" style="display:none;flex-direction:column">
-        <div class="cred-panel-header">
-          <span id="form-title-label" class="cred-panel-title">Nova Credencial</span>
-        </div>
-
-        <div class="cred-form">
-          <div class="form-group">
-            <label class="form-label" for="f-nome">Serviço / Nome *</label>
-            <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-url">URL</label>
-            <input id="f-url" type="text" class="form-input" placeholder="https://…" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-email">E-mail *</label>
-            <input id="f-email" type="email" class="form-input" placeholder="usuario@dominio.com" autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-senha">Senha *</label>
-            <div class="pw-wrap">
-              <input id="f-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password">
-              <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-obs">Observação</label>
-            <textarea id="f-obs" class="form-input form-textarea" placeholder="Notas adicionais…"></textarea>
-          </div>
-        </div>
-
-        <div class="cred-form-footer">
-          <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
-          <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
-        </div>
-      </div>
-
-    </main>
+    </div>
   </div>
 
   <!-- ── DELETE MODAL ────────────────────────────────────────────────────── -->

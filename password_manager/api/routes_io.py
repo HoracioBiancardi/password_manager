@@ -2,10 +2,12 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from password_manager.config import Settings
+from password_manager.crypto.crypto_service import CryptoService
 from password_manager.exceptions import ChaveMestreInvalidaError
 from password_manager.models.credencial import Credencial
 from password_manager.services.password_manager_service import PasswordManagerService
@@ -43,6 +45,18 @@ def exportar(
         content=payload,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.delete("/vault")
+def reset_vault(x_master_key: str = Header(...)) -> dict[str, str]:
+    """Apaga o cofre de senhas. Valida o formato da chave (sem descriptografar o vault)."""
+    try:
+        CryptoService(x_master_key)
+    except ChaveMestreInvalidaError:
+        raise HTTPException(status_code=401, detail="Chave Mestre inválida.")
+    settings = Settings()
+    settings.storage_path.unlink(missing_ok=True)
+    return {"detail": "Cofre apagado."}
 
 
 @router.post("/import")
