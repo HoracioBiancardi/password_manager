@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pm-api = "password_manager.api.app:start"
+pm = "password_manager.api.app:start"
 
 [build-system]
 requires = ["hatchling"]
