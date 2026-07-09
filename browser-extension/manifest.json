@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "PM Vault",
+  "version": "1.0",
+  "description": "Auto-preenchimento seguro para o PM Vault local",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}

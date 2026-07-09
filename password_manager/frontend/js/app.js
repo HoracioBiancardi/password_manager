@@ -1,6 +1,7 @@
 import { st } from './state.js';
 import { toast, copyText, downloadBlob, initBackground, esc, initial } from './utils.js';
 import { listar, adicionar, atualizar, remover, exportar, importar, resetVault } from './api.js';
+import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved } from './prefs.js';
 
 const key = (c) => `${c.nome}::${c.email}`;
 
@@ -38,7 +39,16 @@ export async function login() {
   try {
     st.masterKey = k;
     await listar();
-    sessionStorage.setItem('pm_key', k);
+    
+    const remember = document.getElementById('remember-key-checkbox').checked;
+    if (remember) {
+      localStorage.setItem('pm_key', k);
+      sessionStorage.removeItem('pm_key');
+    } else {
+      sessionStorage.setItem('pm_key', k);
+      localStorage.removeItem('pm_key');
+    }
+
     st.freshKey = false;
     document.getElementById('new-vault-btn').style.display = 'none';
     showApp();
@@ -46,12 +56,8 @@ export async function login() {
   } catch (e) {
     st.masterKey = null;
     if (e.status === 401) {
-      if (st.freshKey) {
-        toast('Chave nova não abre o cofre existente. Use "Criar Cofre Vazio" para apagar e recomeçar.', 'warn', 6000);
-        document.getElementById('new-vault-btn').style.display = '';
-      } else {
-        toast('Chave inválida. Tente novamente.', 'error');
-      }
+      toast('Senha incorreta para o cofre existente. Para redefinir usando esta senha, clique em "Criar cofre vazio" (atenção: apaga os dados atuais).', 'warn', 7000);
+      document.getElementById('new-vault-btn').style.display = '';
     } else {
       toast(e.message, 'error');
     }
@@ -63,6 +69,7 @@ export async function login() {
 
 export function logout() {
   sessionStorage.removeItem('pm_key');
+  localStorage.removeItem('pm_key');
   st.masterKey = null;
   st.freshKey = false;
   st.credentials = []; st.filtered = [];
@@ -72,6 +79,7 @@ export function logout() {
   _hideForm();
   showLogin();
   document.getElementById('master-key-input').value = '';
+  document.getElementById('remember-key-checkbox').checked = false;
   renderList();
 }
 
@@ -466,6 +474,263 @@ async function checkConn() {
   }
 }
 
+// ── Settings Modal Tabs & Bookmarklet ──────────────────────────────
+export function switchSettingsTab(tab) {
+  const btnApp = document.getElementById('tab-btn-appearance');
+  const btnInt = document.getElementById('tab-btn-integration');
+  const contentApp = document.getElementById('tab-content-appearance');
+  const contentInt = document.getElementById('tab-content-integration');
+
+  if (tab === 'appearance') {
+    btnApp.classList.add('active');
+    btnInt.classList.remove('active');
+    contentApp.style.display = 'block';
+    contentInt.style.display = 'none';
+  } else {
+    btnApp.classList.remove('active');
+    btnInt.classList.add('active');
+    contentApp.style.display = 'none';
+    contentInt.style.display = 'flex';
+  }
+}
+
+export function openSettingsModal() {
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-scanlines').checked = getCrtScanlines();
+  document.getElementById('settings-flicker').checked = getCrtFlicker();
+  document.getElementById('settings-static').checked = getCrtStatic();
+  document.getElementById('settings-curved').checked = getCrtCurved();
+  document.getElementById('settings-theme').value = getCrtTheme();
+  switchSettingsTab('appearance');
+}
+
+export function closeSettingsModal() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function initBookmarklet() {
+  const code = `javascript:(async function(){
+    const existing = document.getElementById('pm-vault-bookmarklet');
+    if (existing) { existing.remove(); return; }
+
+    const style = document.createElement('style');
+    style.id = 'pm-vault-style';
+    style.textContent = \`
+      #pm-vault-bookmarklet {
+        position: fixed; top: 15px; right: 15px; width: 320px;
+        background: #061107; border: 2px solid #1aff80; border-radius: 4px;
+        color: #1aff80; font-family: 'Share Tech Mono', monospace; z-index: 999999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 10px rgba(26,255,128,0.3);
+        padding: 12px; font-size: 13px; text-shadow: 0 0 4px rgba(26,255,128,0.5);
+      }
+      #pm-vault-bookmarklet h3 { margin: 0 0 10px 0; font-size: 14px; font-weight: bold; border-bottom: 1px solid rgba(26,255,128,0.3); padding-bottom: 5px; display:flex; justify-content:space-between; }
+      #pm-vault-bookmarklet input {
+        width: 100%; background: #0b220e; border: 1px solid rgba(26,255,128,0.4);
+        color: #1aff80; padding: 4px 8px; margin-bottom: 8px; font-family: inherit; font-size: 12px;
+        box-sizing: border-box; outline: none;
+      }
+      #pm-vault-bookmarklet button {
+        background: #1aff80; color: #030804; border: none; padding: 4px 8px;
+        cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; width: 100%; margin-top: 4px;
+      }
+      #pm-vault-bookmarklet .cred-item {
+        padding: 6px; border: 1px solid rgba(26,255,128,0.2); margin-top: 6px; cursor: pointer;
+        background: #0b220e; border-radius: 2px; transition: all 0.2s;
+      }
+      #pm-vault-bookmarklet .cred-item:hover { background: #113315; border-color: #1aff80; }
+    \`;
+    document.head.appendChild(style);
+
+    const div = document.createElement('div');
+    div.id = 'pm-vault-bookmarklet';
+    div.innerHTML = \`
+      <h3>PM Vault <span>[X]</span></h3>
+      <div id="pm-setup">
+        <input type="password" id="pm-key-in" placeholder="Chave Mestre Fernet...">
+        <button id="pm-btn-load">Buscar Credenciais</button>
+      </div>
+      <div id="pm-main-panel" style="display:none; flex-direction:column;">
+        <div style="display:flex; gap:4px; margin-bottom:8px">
+          <button id="pm-btn-reload" style="flex:1">🔄 Recarregar</button>
+          <button id="pm-btn-add-show" style="flex:1">➕ Salvar Página</button>
+        </div>
+        <div id="pm-results" style="max-height: 180px; overflow-y: auto;"></div>
+        <div id="pm-add-panel" style="display:none; flex-direction:column; gap:6px; margin-top:8px; border-top:1px solid rgba(26,255,128,0.2); padding-top:8px;">
+          <input type="text" id="pm-add-name" placeholder="Serviço / Nome *">
+          <input type="text" id="pm-add-url" placeholder="URL">
+          <input type="text" id="pm-add-email" placeholder="E-mail / User *">
+          <input type="password" id="pm-add-pass" placeholder="Senha *">
+          <button id="pm-btn-add-submit">Confirmar Salvar</button>
+        </div>
+      </div>
+    \`;
+    document.body.appendChild(div);
+
+    div.querySelector('h3 span').onclick = () => { div.remove(); style.remove(); };
+
+    let currentMasterKey = sessionStorage.getItem('pm_vault_key');
+    if (currentMasterKey) {
+      div.querySelector('#pm-key-in').value = currentMasterKey;
+    }
+
+    const loadCreds = async () => {
+      const k = div.querySelector('#pm-key-in').value.trim();
+      if (!k) return;
+      sessionStorage.setItem('pm_vault_key', k);
+      currentMasterKey = k;
+
+      const term = window.location.hostname.replace(/^www\\\\./, '');
+      const resDiv = div.querySelector('#pm-results');
+      resDiv.innerHTML = 'Buscando...';
+
+      try {
+        const r = await fetch('${window.location.origin}/api/credenciais/buscar?termo=' + encodeURIComponent(term), {
+          headers: { 'X-Master-Key': k }
+        });
+        if (r.status === 401) { resDiv.innerHTML = 'Chave Mestre inválida.'; return; }
+        if (!r.ok) { resDiv.innerHTML = 'Erro na API.'; return; }
+        const creds = await r.json();
+
+        div.querySelector('#pm-setup').style.display = 'none';
+        div.querySelector('#pm-main-panel').style.display = 'flex';
+
+        if (!creds.length) {
+          resDiv.innerHTML = '<div style="text-align:center;padding:10px;opacity:0.8">Nenhuma credencial sugerida para ' + term + '</div>';
+          return;
+        }
+
+        resDiv.innerHTML = '';
+        creds.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'cred-item';
+          item.innerHTML = '<strong>' + c.nome + '</strong><br><span style="font-size:10px; opacity:0.7">' + c.email + '</span>';
+          item.onclick = () => {
+            const pwFields = document.querySelectorAll('input[type="password"]');
+            if (pwFields.length) {
+              pwFields.forEach(pf => {
+                pf.value = c.senha;
+                pf.dispatchEvent(new Event('input', { bubbles: true }));
+                pf.dispatchEvent(new Event('change', { bubbles: true }));
+              });
+              const userFields = document.querySelectorAll('input[type="email"], input[type="text"], input:not([type])');
+              if (userFields.length) {
+                let filled = false;
+                for(let i = 0; i < userFields.length; i++) {
+                  if (userFields[i].getBoundingClientRect().top < pwFields[0].getBoundingClientRect().top) {
+                    userFields[i].value = c.email;
+                    userFields[i].dispatchEvent(new Event('input', { bubbles: true }));
+                    userFields[i].dispatchEvent(new Event('change', { bubbles: true }));
+                    filled = true;
+                  }
+                }
+                if (!filled) {
+                  userFields[0].value = c.email;
+                  userFields[0].dispatchEvent(new Event('input', { bubbles: true }));
+                  userFields[0].dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              }
+            }
+            div.remove(); style.remove();
+          };
+          resDiv.appendChild(item);
+        });
+      } catch (e) {
+        resDiv.innerHTML = 'Erro ao conectar no cofre local.';
+      }
+    };
+
+    const detectFields = () => {
+      const passwordInputs = document.querySelectorAll('input[type="password"]');
+      let passVal = '';
+      let userVal = '';
+
+      const pwInput = Array.from(passwordInputs).find(input => input.value.trim()) || passwordInputs[0];
+      if (pwInput) {
+        passVal = pwInput.value;
+        const allInputs = Array.from(document.querySelectorAll('input'));
+        const pwIndex = allInputs.indexOf(pwInput);
+        if (pwIndex !== -1) {
+          let usernameInput = null;
+          for (let i = pwIndex - 1; i >= 0; i--) {
+            const input = allInputs[i];
+            const type = input.type.toLowerCase();
+            if ((type === 'text' || type === 'email' || type === 'tel' || !input.hasAttribute('type')) && 
+                input.offsetWidth > 0 && input.offsetHeight > 0) {
+              usernameInput = input;
+              break;
+            }
+          }
+          if (!usernameInput) {
+            usernameInput = Array.from(document.querySelectorAll('input[type="email"], input[type="text"]')).find(input => input.value.trim()) ||
+                            document.querySelector('input[type="email"], input[type="text"]');
+          }
+          if (usernameInput) {
+            userVal = usernameInput.value;
+          }
+        }
+      }
+      return { user: userVal, pass: passVal };
+    };
+
+    div.querySelector('#pm-btn-load').onclick = loadCreds;
+    div.querySelector('#pm-key-in').onkeydown = (e) => { if(e.key === 'Enter') loadCreds(); };
+    div.querySelector('#pm-btn-reload').onclick = loadCreds;
+    
+    const addPanel = div.querySelector('#pm-add-panel');
+    div.querySelector('#pm-btn-add-show').onclick = () => {
+      if (addPanel.style.display === 'none') {
+        addPanel.style.display = 'flex';
+        div.querySelector('#pm-add-name').value = window.location.hostname.replace(/^www\\\\./, '');
+        div.querySelector('#pm-add-url').value = window.location.href;
+        
+        const detected = detectFields();
+        div.querySelector('#pm-add-email').value = detected.user;
+        div.querySelector('#pm-add-pass').value = detected.pass;
+      } else {
+        addPanel.style.display = 'none';
+      }
+    };
+
+    div.querySelector('#pm-btn-add-submit').onclick = async () => {
+      const nome = div.querySelector('#pm-add-name').value.trim();
+      const url = div.querySelector('#pm-add-url').value.trim();
+      const email = div.querySelector('#pm-add-email').value.trim();
+      const senha = div.querySelector('#pm-add-pass').value.trim();
+
+      if (!nome || !email || !senha) {
+        alert('Os campos Nome, E-mail/Usuário e Senha são obrigatórios.');
+        return;
+      }
+
+      try {
+        const r = await fetch('${window.location.origin}/api/credenciais/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': currentMasterKey
+          },
+          body: JSON.stringify({ nome, url, email, senha, observacao: '' })
+        });
+
+        if (!r.ok) throw new Error('Falha ao salvar.');
+        alert('Salvo com sucesso!');
+        addPanel.style.display = 'none';
+        loadCreds();
+      } catch(err) {
+        alert('Erro ao salvar: ' + err.message);
+      }
+    };
+
+    if (currentMasterKey) loadCreds();
+  })()`;
+
+  const compressed = code.replace(/\\s+/g, ' ');
+  const link = document.getElementById('bookmarklet-link');
+  if (link) {
+    link.href = compressed;
+  }
+}
+
 // ── Expor ao DOM ───────────────────────────────────────────────────
 Object.assign(window, {
   login, logout, toggleMasterVis,
@@ -479,11 +744,20 @@ Object.assign(window, {
   openKeyGenModal, closeKeyGenModal, regenerateKey, copyGeneratedKey, useGeneratedKey,
   createNewVault,
   doImport, onImportFile,
+  openSettingsModal, closeSettingsModal,
+  toggleScanlines: setCrtScanlines,
+  toggleFlicker: setCrtFlicker,
+  toggleStatic: setCrtStatic,
+  toggleCurved: setCrtCurved,
+  changeTheme: setCrtTheme,
+  switchSettingsTab,
 });
 
 // ── Init ───────────────────────────────────────────────────────────
 (async () => {
+  applyPrefsOnBoot();
   initBackground();
+  initBookmarklet();
   await checkConn();
   if (st.masterKey) {
     try {

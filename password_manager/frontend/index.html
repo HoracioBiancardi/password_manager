@@ -5,11 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PM Vault</title>
-  <link rel="stylesheet" href="/ds/css/design-system.css">
-  <link rel="stylesheet" href="/ds/css/app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/design-system.css">
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
 
-<body>
+<body class="crt-enabled flicker-enabled curved-enabled theme-green">
+  <div class="crt-overlay"></div>
+  <div class="crt-vignette"></div>
+  <div class="crt-static"></div>
+  <div class="crt-turn-on-overlay"></div>
 
   <canvas id="bg-canvas"></canvas>
   <div class="aurora">
@@ -30,7 +37,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 0.8rem;">
         <label class="form-label" for="master-key-input">Chave Mestre</label>
         <div class="pw-wrap">
           <input id="master-key-input" type="password" class="form-input" placeholder="Cole sua chave Fernet…"
@@ -38,6 +45,13 @@
           <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">👁</button>
         </div>
         <p class="form-hint">Usada apenas para descriptografar o cofre. Não é armazenada em disco.</p>
+      </div>
+
+      <div class="form-group" style="margin-top: -0.2rem; margin-bottom: 1.2rem;">
+        <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: normal; text-transform: none; text-shadow: var(--glow-text); color: var(--text-muted);">
+          <input type="checkbox" id="remember-key-checkbox" style="width: auto;">
+          <span>Lembrar Chave neste dispositivo</span>
+        </label>
       </div>
 
       <div class="modal-footer" style="padding-top:.25rem;flex-direction:column;gap:.6rem">
@@ -48,6 +62,10 @@
         <button class="btn btn-ghost" onclick="openKeyGenModal()"
           style="width:100%;justify-content:center;font-size:.78rem">
           ✨ Gerar nova Chave Mestre
+        </button>
+        <button class="btn btn-ghost" onclick="openSettingsModal()"
+          style="width:100%;justify-content:center;font-size:.78rem">
+          ⚙️ Aparência
         </button>
         <button class="btn btn-vault-reset" id="new-vault-btn" onclick="createNewVault()"
           style="display:none">
@@ -109,6 +127,7 @@
       <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup JSON">⬇ Exportar</button>
       <button class="btn btn-ghost btn-sm" onclick="doImport()" title="Importar backup JSON">⬆ Importar</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="onImportFile(this)">
+      <button class="btn btn-ghost btn-sm" onclick="openSettingsModal()" title="Configurações de Aparência">⚙️ Aparência</button>
       <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
     </div>
   </div>
@@ -211,9 +230,80 @@
     </div>
   </div>
 
+  <!-- ── SETTINGS MODAL ────────────────────────────────────────────────── -->
+  <div class="overlay" id="settings-overlay" onclick="if(event.target === this) closeSettingsModal()">
+    <div class="modal glass" style="max-width:400px">
+      <div class="modal-header">
+        <h2>Configurações e Integração</h2>
+        <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem">
+        <div class="tab-buttons" style="display:flex;gap:.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem;margin-bottom:.5rem">
+          <button class="btn btn-ghost btn-sm active" id="tab-btn-appearance" onclick="switchSettingsTab('appearance')" style="flex:1;justify-content:center">Aparência</button>
+          <button class="btn btn-ghost btn-sm" id="tab-btn-integration" onclick="switchSettingsTab('integration')" style="flex:1;justify-content:center">Integração</button>
+        </div>
+
+        <!-- ── TAB APPEARANCE ── -->
+        <div class="settings-tab-content" id="tab-content-appearance" style="display:block">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Aparência CRT Pip-Boy</label>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
+                <input type="checkbox" id="settings-scanlines" onchange="toggleScanlines(this.checked)">
+                <span>Ativar linhas de varredura (Scanlines CRT)</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
+                <input type="checkbox" id="settings-flicker" onchange="toggleFlicker(this.checked)">
+                <span>Ativar cintilação de tela (Flicker)</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
+                <input type="checkbox" id="settings-static" onchange="toggleStatic(this.checked)">
+                <span>Ativar estática/ruído de sinal (Signal Noise)</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
+                <input type="checkbox" id="settings-curved" onchange="toggleCurved(this.checked)">
+                <span>Ativar tela curvada e vinheta (Curved Glass)</span>
+              </label>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <label for="settings-theme" style="font-size: 0.8125rem; color: var(--text-muted);">Tema de Cor:</label>
+                <select id="settings-theme" class="form-input" style="flex: 1; padding: 0.25rem 0.5rem;" onchange="changeTheme(this.value)">
+                  <option value="green">Verde Fósforo (Classic Pip-Boy)</option>
+                  <option value="amber">Âmbar Radiação (Fallout NV)</option>
+                  <option value="blue">Azul HUD (Fallout 4)</option>
+                  <option value="white">Branco Monocromático</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB INTEGRATION ── -->
+        <div class="settings-tab-content" id="tab-content-integration" style="display:none;flex-direction:column;gap:.8rem">
+          <p style="font-size:.75rem;opacity:.85;line-height:1.4">Adicione o auto-preenchimento ao Chrome ou Firefox:</p>
+          
+          <div style="border:1px dashed var(--border);padding:.6rem;border-radius:var(--r-md);background:var(--surface-alt)">
+            <label class="form-label" style="margin-bottom:.2rem">Bookmarklet (Sem Instalação)</label>
+            <p style="font-size:.67rem;color:var(--text-muted);margin-bottom:.5rem;line-height:1.4">Arraste o botão abaixo para a sua barra de favoritos (Bookmarks Bar):</p>
+            <a href="#" id="bookmarklet-link" class="btn btn-primary" style="width:100%;justify-content:center;font-size:.72rem;padding:.4rem;text-decoration:none;display:inline-flex" title="Arraste para a barra de favoritos" onclick="event.preventDefault(); alert('Arraste este botão para a sua barra de favoritos (Bookmarks Bar) do navegador.');">
+              🟢 Preencher com PM Vault
+            </a>
+          </div>
+
+          <div style="border:1px dashed var(--border);padding:.6rem;border-radius:var(--r-md);background:var(--surface-alt)">
+            <label class="form-label" style="margin-bottom:.2rem">Extensão de Navegador</label>
+            <p style="font-size:.67rem;color:var(--text-muted);line-height:1.4">Abra o painel de Extensões do navegador, ative o Modo Desenvolvedor e carregue a pasta <code style="font-size:.65rem;color:var(--primary)">/browser-extension</code> deste projeto.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top: 1rem">
+        <button class="btn btn-primary" onclick="closeSettingsModal()" style="width:100%;justify-content:center">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="/ds/js/app.js"></script>
+  <script type="module" src="/static/js/app.js"></script>
 </body>
 
 </html>

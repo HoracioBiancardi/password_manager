@@ -63,6 +63,300 @@
   --r-full:          9999px;
 }
 
+/* ── Pip-Boy Themes & CRT Overrides ────────────────────────────────────── */
+
+/* Theme Green Phosphor (Default) */
+body.theme-green {
+  --bg:              #030804;
+  --surface:         #061107;
+  --surface-alt:     #0b220e;
+  --surface-hover:   #113315;
+
+  --border:          rgba(26, 255, 128, 0.18);
+  --border-muted:    rgba(26, 255, 128, 0.08);
+  --border-bright:   rgba(26, 255, 128, 0.45);
+
+  --primary:         #1aff80;
+  --primary-hover:   #26ff8c;
+  --primary-dim:     rgba(26, 255, 128, 0.12);
+  --primary-glow:    rgba(26, 255, 128, 0.24);
+  --glow-ring:       0 0 0 3px rgba(26, 255, 128, 0.24);
+
+  --text:            #1aff80;
+  --text-muted:      #11b857;
+  --text-subtle:     #075927;
+
+  --glow-color:      rgba(26, 255, 128, 0.5);
+  --glow-text:       0 0 4px rgba(26, 255, 128, 0.5);
+  
+  --success:         #1aff80;
+  --warn:            #ff9900;
+  --danger:          #ff3333;
+  --danger-dim:      rgba(255, 51, 51, 0.12);
+  --info:            #00d2ff;
+}
+
+/* Theme Amber Rad (Fallout New Vegas) */
+body.theme-amber {
+  --bg:              #080400;
+  --surface:         #130a00;
+  --surface-alt:     #241200;
+  --surface-hover:   #371c00;
+
+  --border:          rgba(255, 170, 0, 0.18);
+  --border-muted:    rgba(255, 170, 0, 0.08);
+  --border-bright:   rgba(255, 170, 0, 0.45);
+
+  --primary:         #ffaa00;
+  --primary-hover:   #ffbb33;
+  --primary-dim:     rgba(255, 170, 0, 0.12);
+  --primary-glow:    rgba(255, 170, 0, 0.24);
+  --glow-ring:       0 0 0 3px rgba(255, 170, 0, 0.24);
+
+  --text:            #ffaa00;
+  --text-muted:      #cc8800;
+  --text-subtle:     #7f5500;
+
+  --glow-color:      rgba(255, 170, 0, 0.5);
+  --glow-text:       0 0 4px rgba(255, 170, 0, 0.5);
+  
+  --success:         #ffaa00;
+  --warn:            #ffaa00;
+  --danger:          #ff3333;
+  --danger-dim:      rgba(255, 51, 51, 0.12);
+  --info:            #00d2ff;
+}
+
+/* Theme Blue HUD (Fallout 4) */
+body.theme-blue {
+  --bg:              #00060c;
+  --surface:         #001224;
+  --surface-alt:     #002347;
+  --surface-hover:   #00366c;
+
+  --border:          rgba(0, 210, 255, 0.18);
+  --border-muted:    rgba(0, 210, 255, 0.08);
+  --border-bright:   rgba(0, 210, 255, 0.45);
+
+  --primary:         #00d2ff;
+  --primary-hover:   #33ddff;
+  --primary-dim:     rgba(0, 210, 255, 0.12);
+  --primary-glow:    rgba(0, 210, 255, 0.24);
+  --glow-ring:       0 0 0 3px rgba(0, 210, 255, 0.24);
+
+  --text:            #00d2ff;
+  --text-muted:      #00a8cc;
+  --text-subtle:     #00667f;
+
+  --glow-color:      rgba(0, 210, 255, 0.5);
+  --glow-text:       0 0 4px rgba(0, 210, 255, 0.5);
+  
+  --success:         #00d2ff;
+  --warn:            #ff9900;
+  --danger:          #ff3333;
+  --danger-dim:      rgba(255, 51, 51, 0.12);
+  --info:            #00d2ff;
+}
+
+/* Theme White Mono (Vintage monochrome monitor) */
+body.theme-white {
+  --bg:              #0b0b0b;
+  --surface:         #161616;
+  --surface-alt:     #242424;
+  --surface-hover:   #343434;
+
+  --border:          rgba(240, 240, 240, 0.18);
+  --border-muted:    rgba(240, 240, 240, 0.08);
+  --border-bright:   rgba(240, 240, 240, 0.45);
+
+  --primary:         #f0f0f0;
+  --primary-hover:   #ffffff;
+  --primary-dim:     rgba(240, 240, 240, 0.12);
+  --primary-glow:    rgba(240, 240, 240, 0.24);
+  --glow-ring:       0 0 0 3px rgba(240, 240, 240, 0.24);
+
+  --text:            #f0f0f0;
+  --text-muted:      #b0b0b0;
+  --text-subtle:     #606060;
+
+  --glow-color:      rgba(240, 240, 240, 0.4);
+  --glow-text:       0 0 4px rgba(240, 240, 240, 0.4);
+  
+  --success:         #f0f0f0;
+  --warn:            #ff9900;
+  --danger:          #ff3333;
+  --danger-dim:      rgba(255, 51, 51, 0.12);
+  --info:            #00d2ff;
+}
+
+/* Aplica fontes monospace, glow text e cantos industriais para as cores retro */
+body.theme-green, body.theme-amber, body.theme-blue, body.theme-white {
+  font-family: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', monospace;
+  text-shadow: var(--glow-text);
+  
+  --r-sm:            2px;
+  --r-md:            3px;
+  --r-lg:            4px;
+}
+
+body.theme-green input, body.theme-green textarea, body.theme-green select, body.theme-green button, body.theme-green kbd, body.theme-green span:not(.brand-by-text), body.theme-green div:not(.brand-by), body.theme-green p, body.theme-green h1, body.theme-green h2, body.theme-green h3, body.theme-green h4, body.theme-green h5, body.theme-green h6, body.theme-green a, body.theme-green li, body.theme-green td, body.theme-green th, body.theme-green pre, body.theme-green code,
+body.theme-amber input, body.theme-amber textarea, body.theme-amber select, body.theme-amber button, body.theme-amber kbd, body.theme-amber span:not(.brand-by-text), body.theme-amber div:not(.brand-by), body.theme-amber p, body.theme-amber h1, body.theme-amber h2, body.theme-amber h3, body.theme-amber h4, body.theme-amber h5, body.theme-amber h6, body.theme-amber a, body.theme-amber li, body.theme-amber td, body.theme-amber th, body.theme-amber pre, body.theme-amber code,
+body.theme-blue input, body.theme-blue textarea, body.theme-blue select, body.theme-blue button, body.theme-blue kbd, body.theme-blue span:not(.brand-by-text), body.theme-blue div:not(.brand-by), body.theme-blue p, body.theme-blue h1, body.theme-blue h2, body.theme-blue h3, body.theme-blue h4, body.theme-blue h5, body.theme-blue h6, body.theme-blue a, body.theme-blue li, body.theme-blue td, body.theme-blue th, body.theme-blue pre, body.theme-blue code,
+body.theme-white input, body.theme-white textarea, body.theme-white select, body.theme-white button, body.theme-white kbd, body.theme-white span:not(.brand-by-text), body.theme-white div:not(.brand-by), body.theme-white p, body.theme-white h1, body.theme-white h2, body.theme-white h3, body.theme-white h4, body.theme-white h5, body.theme-white h6, body.theme-white a, body.theme-white li, body.theme-white td, body.theme-white th, body.theme-white pre, body.theme-white code {
+  font-family: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', monospace !important;
+  text-shadow: var(--glow-text);
+}
+
+/* CRT Screen Effects & Overlay */
+.crt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0,0,0,0) 70%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Efeito de vidro curvado / vinheta pesada */
+.crt-vignette {
+  position: fixed;
+  inset: 0;
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.95);
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+}
+body.curved-enabled .crt-vignette {
+  display: block;
+}
+body.curved-enabled .crt-overlay {
+  background: radial-gradient(circle, rgba(0,0,0,0) 45%, rgba(0, 0, 0, 0.85) 100%);
+}
+
+/* Ruído de estática de TV antiga (Signal Noise) */
+.crt-static {
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 9996;
+  display: none;
+}
+body.static-enabled .crt-static {
+  display: block;
+  animation: static-drift 0.15s steps(4) infinite;
+}
+@keyframes static-drift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-0.5%, 0.5%); }
+  50% { transform: translate(0.5%, -0.5%); }
+  75% { transform: translate(-0.5%, -0.5%); }
+  100% { transform: translate(0.5%, 0.5%); }
+}
+
+/* Animação CRT de ligar o monitor */
+.crt-turn-on-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 100000;
+  pointer-events: none;
+  animation: crt-turn-on 0.65s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+@keyframes crt-turn-on {
+  0% {
+    transform: scale(0, 0.005);
+    background: #fff;
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1, 0.005);
+    background: var(--primary);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    background: transparent;
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+body.crt-enabled::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background-size: 100% 4px;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+/* Barra de rolagem de varredura (Refresh scanline bar) */
+body.crt-enabled::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: var(--primary);
+  opacity: 0.04;
+  z-index: 9997;
+  pointer-events: none;
+  animation: crt-roll 10s linear infinite;
+}
+
+@keyframes crt-roll {
+  0% { transform: translateY(-10px); }
+  100% { transform: translateY(105vh); }
+}
+
+body.flicker-enabled {
+  animation: crt-flicker 0.22s infinite;
+}
+
+/* Cintilação orgânica instável (Organic failure-prone old monitor flicker) */
+@keyframes crt-flicker {
+  0% { opacity: 0.985; }
+  8% { opacity: 0.992; }
+  15% { opacity: 0.978; }
+  22% { opacity: 0.996; }
+  30% { opacity: 0.972; }
+  45% { opacity: 1; }
+  55% { opacity: 0.98; }
+  68% { opacity: 0.993; }
+  78% { opacity: 0.974; }
+  88% { opacity: 0.996; }
+  100% { opacity: 0.985; }
+}
+
+/* Scrollbars Retro */
+body.theme-green *, body.theme-amber *, body.theme-blue *, body.theme-white * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-bright) transparent;
+}
+body.theme-green *::-webkit-scrollbar, body.theme-amber *::-webkit-scrollbar, body.theme-blue *::-webkit-scrollbar, body.theme-white *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+body.theme-green *::-webkit-scrollbar-thumb, body.theme-amber *::-webkit-scrollbar-thumb, body.theme-blue *::-webkit-scrollbar-thumb, body.theme-white *::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--bg);
+}
+body.theme-green *::-webkit-scrollbar-thumb:hover, body.theme-amber *::-webkit-scrollbar-thumb:hover, body.theme-blue *::-webkit-scrollbar-thumb:hover, body.theme-white *::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
 /* ── Base ─────────────────────────────────────────────────────────── */
 html, body { height: 100%; overflow: hidden; }
 

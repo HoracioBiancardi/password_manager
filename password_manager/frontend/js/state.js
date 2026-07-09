@@ -1,5 +1,5 @@
 export const st = {
-  masterKey: sessionStorage.getItem('pm_key') || null,
+  masterKey: localStorage.getItem('pm_key') || sessionStorage.getItem('pm_key') || null,
   credentials: [],
   filtered: [],
   activeKey: null,   // string composta "nome::email"

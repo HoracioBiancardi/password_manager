@@ -11,7 +11,6 @@ from .routes import router
 from .routes_io import router as router_io
 
 _FRONTEND_DIR: Path = Path(__file__).parent.parent / "frontend"
-_DS_DIR: Path = Path(__file__).parent.parent.parent / "design-system"
 
 
 def create_app() -> FastAPI:
@@ -47,7 +46,6 @@ def create_app() -> FastAPI:
     app.include_router(router_io, prefix="/api")
 
     app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
-    app.mount("/ds", StaticFiles(directory=str(_DS_DIR)), name="design-system")
     return app
 
 

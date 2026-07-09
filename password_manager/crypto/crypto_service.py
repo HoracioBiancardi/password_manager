@@ -13,19 +13,27 @@ class CryptoService:
     """
 
     def __init__(self, chave_mestre: str) -> None:
-        """Inicializa o serviço com uma chave mestre Fernet.
+        """Inicializa o serviço com uma chave mestre Fernet ou senha personalizada.
 
         Args:
-            chave_mestre: Chave Fernet válida (base64url de 32 bytes).
-                Pode ser gerada com CryptoService.gerar_nova_chave().
+            chave_mestre: Chave Fernet válida (base64url de 32 bytes) ou senha comum.
 
         Raises:
-            ChaveMestreInvalidaError: Se o formato da chave for inválido.
+            ChaveMestreInvalidaError: Se o formato for totalmente inutilizável (ex: string vazia).
         """
+        if not chave_mestre:
+            raise ChaveMestreInvalidaError("A chave mestre não pode ser vazia.")
+            
         try:
+            # Tenta inicializar com a chave fornecida diretamente (se for formato Fernet válido)
             self._fernet: Fernet = Fernet(chave_mestre.encode())
-        except Exception as exc:
-            raise ChaveMestreInvalidaError("Formato de chave inválido.") from exc
+        except Exception:
+            # Caso contrário (qualquer senha comum), derivamos a chave usando SHA-256
+            import base64
+            import hashlib
+            hash_bytes = hashlib.sha256(chave_mestre.encode()).digest()
+            chave_derivada = base64.urlsafe_b64encode(hash_bytes).decode()
+            self._fernet = Fernet(chave_derivada.encode())
 
     @staticmethod
     def gerar_nova_chave() -> str:

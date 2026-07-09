@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      width: 320px;
+      background: #030804;
+      color: #1aff80;
+      font-family: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', monospace;
+      font-size: 13px;
+      padding: 12px;
+      text-shadow: 0 0 3px rgba(26, 255, 128, 0.4);
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbars */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(26, 255, 128, 0.3) transparent;
+    }
+    *::-webkit-scrollbar { width: 5px; }
+    *::-webkit-scrollbar-thumb {
+      background: rgba(26, 255, 128, 0.3);
+      border-radius: 2px;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(26, 255, 128, 0.2);
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-icon { font-size: 1.1rem; }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    input {
+      width: 100%;
+      background: #061107;
+      border: 1px solid rgba(26, 255, 128, 0.3);
+      color: #1aff80;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+    input:focus {
+      border-color: #1aff80;
+      box-shadow: 0 0 6px rgba(26, 255, 128, 0.3);
+    }
+
+    button {
+      background: #1aff80;
+      color: #030804;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 3px;
+      width: 100%;
+      transition: all 0.15s;
+    }
+    button:hover:not(:disabled) {
+      background: #26ff8c;
+      box-shadow: 0 0 8px rgba(26, 255, 128, 0.5);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: #1aff80;
+      border: 1px solid rgba(26, 255, 128, 0.3);
+      margin-top: 6px;
+    }
+    .btn-ghost:hover {
+      background: rgba(26, 255, 128, 0.1);
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Results */
+    .cred-list {
+      margin-top: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cred-item {
+      background: #061107;
+      border: 1px solid rgba(26, 255, 128, 0.2);
+      border-radius: 3px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cred-item:hover {
+      border-color: #1aff80;
+      background: #0b220e;
+    }
+
+    .cred-name {
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .cred-email {
+      font-size: 10px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .cred-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .action-badge {
+      font-size: 9px;
+      border: 1px solid rgba(26, 255, 128, 0.4);
+      padding: 1px 4px;
+      border-radius: 2px;
+      cursor: pointer;
+      background: transparent;
+      color: #1aff80;
+      font-weight: normal;
+      width: auto;
+    }
+    .action-badge:hover {
+      background: rgba(26, 255, 128, 0.15);
+      border-color: #1aff80;
+    }
+
+    .status-msg {
+      text-align: center;
+      padding: 12px;
+      opacity: 0.8;
+      font-size: 12px;
+    }
+
+    .footer {
+      margin-top: 12px;
+      font-size: 10px;
+      opacity: 0.5;
+      text-align: center;
+      border-top: 1px solid rgba(26, 255, 128, 0.1);
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .footer-link {
+      color: #1aff80;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Master Key Setup -->
+  <div id="screen-auth" class="screen">
+    <h3>PM Vault <span class="brand-icon">🔐</span></h3>
+    <div class="form-group">
+      <label for="input-key">Chave Mestre Fernet</label>
+      <input type="password" id="input-key" placeholder="Cole sua chave Fernet..." autocomplete="off">
+    </div>
+    <button id="btn-save-key">Desbloquear Extensão</button>
+    <div class="status-msg" style="font-size: 10px; margin-top: 8px;">
+      Sua chave será armazenada apenas no armazenamento local criptografado do seu navegador.
+    </div>
+  </div>
+
+  <!-- Screen 2: Main Credential Suggester -->
+  <div id="screen-main" class="screen">
+    <h3>PM Vault <span class="brand-icon">🔓</span></h3>
+    
+    <div class="form-group" style="display: flex; gap: 6px; margin-bottom: 8px;">
+      <input type="text" id="input-search" placeholder="Buscar serviço..." autocomplete="off" style="flex: 1;">
+    </div>
+
+    <button id="btn-show-add" class="btn-ghost" style="width: 100%; margin-bottom: 10px; font-size: 11px; padding: 6px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      ➕ Salvar Campos desta Página
+    </button>
+
+    <div style="font-size: 10px; opacity: 0.8; text-transform: uppercase; margin-top: 8px;" id="suggestions-title">
+      Sugestões para esta página:
+    </div>
+    
+    <div id="cred-container" class="cred-list">
+      <!-- Renders dynamically -->
+    </div>
+
+    <div class="footer">
+      <span id="domain-label">localhost</span>
+      <span class="footer-link" id="link-lock">Bloquear cofre</span>
+    </div>
+  </div>
+
+  <!-- Screen 3: Add Credential Form -->
+  <div id="screen-add" class="screen">
+    <h3>Nova Credencial <span class="brand-icon">➕</span></h3>
+    
+    <div class="form-group">
+      <label for="add-nome">Serviço / Nome *</label>
+      <input type="text" id="add-nome" placeholder="Ex: GitHub, Gmail..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="add-url">URL</label>
+      <input type="text" id="add-url" placeholder="https://..." autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="add-email">E-mail / Usuário *</label>
+      <input type="text" id="add-email" placeholder="usuario@dominio.com" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="add-senha">Senha *</label>
+      <input type="password" id="add-senha" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    
+    <button id="btn-save-cred" style="margin-top: 6px;">💾 Salvar Credencial</button>
+    <button class="btn-ghost" id="btn-cancel-add">✕ Cancelar</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
