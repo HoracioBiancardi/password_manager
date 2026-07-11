@@ -126,6 +126,12 @@
 
 /* ── Detail modal ────────────────────────────────────────────────── */
 .detail-modal { max-width: 520px; }
+.detail-modal .modal-header { align-items: flex-start; }
+
+.detail-meta {
+  font-size: .68rem; font-weight: 400; color: var(--text-subtle);
+  margin-top: .3rem; text-transform: none; letter-spacing: normal;
+}
 
 .detail-header-actions {
   display: flex; gap: .4rem; align-items: center; flex-shrink: 0;
@@ -191,4 +197,10 @@
 .count-badge {
   font-size: .65rem; background: rgba(255,255,255,.07);
   padding: .08rem .38rem; border-radius: 10px; color: var(--text-muted);
+}
+
+/* ── Seletor de ordenação (toolbar) ──────────────────────────────── */
+.sort-select {
+  width: auto; max-width: 168px;
+  padding: .3rem .5rem; font-size: .74rem;
 }

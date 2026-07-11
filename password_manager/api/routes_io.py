@@ -2,8 +2,8 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Header, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from password_manager.config import Settings
@@ -27,9 +27,15 @@ class ImportPayload(BaseModel):
 
 @router.get("/export")
 def exportar(
+    criptografado: bool = False,
     servico: PasswordManagerService = Depends(get_servico),
-) -> JSONResponse:
-    """Exporta todas as senhas em formato JSON descriptografado."""
+) -> Response:
+    """Exporta todas as senhas, em JSON puro ou criptografadas com a Chave Mestre.
+
+    Args:
+        criptografado: Se True, o backup é criptografado com a mesma Chave Mestre
+            do cofre (necessária para reimportá-lo depois) em vez de JSON puro.
+    """
     try:
         senhas = [c.to_dict() for c in servico.listar_credenciais()]
     except ChaveMestreInvalidaError:
@@ -40,7 +46,18 @@ def exportar(
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "senhas": senhas,
     }
-    filename = f"pm-backup-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    if criptografado:
+        conteudo = servico.criptografar_payload(payload)
+        filename = f"pm-backup-{timestamp}.enc"
+        return Response(
+            content=conteudo,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    filename = f"pm-backup-{timestamp}.json"
     return JSONResponse(
         content=payload,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
@@ -59,12 +76,8 @@ def reset_vault(x_master_key: str = Header(...)) -> dict[str, str]:
     return {"detail": "Cofre apagado."}
 
 
-@router.post("/import")
-def importar(
-    payload: ImportPayload,
-    servico: PasswordManagerService = Depends(get_servico),
-) -> dict:
-    """Importa senhas, ignorando duplicatas já existentes."""
+def _aplicar_importacao(servico: PasswordManagerService, payload: ImportPayload) -> dict:
+    """Aplica os itens de um ImportPayload ao cofre, ignorando duplicatas já existentes."""
     try:
         senhas_existentes = servico.listar_credenciais()
     except ChaveMestreInvalidaError:
@@ -89,3 +102,41 @@ def importar(
         "senhas_importadas": senhas_importadas,
         "senhas_ignoradas": len(payload.senhas) - senhas_importadas,
     }
+
+
+@router.post("/import")
+def importar(
+    payload: ImportPayload,
+    servico: PasswordManagerService = Depends(get_servico),
+) -> dict:
+    """Importa senhas de um backup JSON puro, ignorando duplicatas já existentes."""
+    return _aplicar_importacao(servico, payload)
+
+
+@router.post("/import-encrypted")
+async def importar_criptografado(
+    request: Request,
+    servico: PasswordManagerService = Depends(get_servico),
+) -> dict:
+    """Importa senhas de um backup gerado por /export?criptografado=true.
+
+    O corpo da requisição é o payload criptografado bruto (bytes); é decifrado
+    com a mesma Chave Mestre do header X-Master-Key.
+    """
+    corpo = await request.body()
+    try:
+        dados = servico.descriptografar_payload(corpo)
+    except ChaveMestreInvalidaError:
+        raise HTTPException(
+            status_code=401,
+            detail="Chave Mestre inválida para decriptar este backup.",
+        )
+    except Exception:
+        raise HTTPException(status_code=422, detail="Arquivo de backup criptografado inválido ou corrompido.")
+
+    try:
+        payload = ImportPayload(**dados)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Arquivo de backup criptografado inválido.")
+
+    return _aplicar_importacao(servico, payload)

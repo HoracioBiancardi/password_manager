@@ -1,10 +1,16 @@
 """Camada de serviço: orquestração das regras de negócio."""
 
 import json
+from datetime import datetime, timezone
 
 from password_manager.crypto.crypto_service import CryptoService
 from password_manager.models.credencial import Credencial
 from password_manager.storage.interface import StorageInterface
+
+
+def _agora_iso() -> str:
+    """Retorna o instante atual em UTC no formato ISO 8601."""
+    return datetime.now(timezone.utc).isoformat()
 
 
 class PasswordManagerService:
@@ -46,6 +52,34 @@ class PasswordManagerService:
         """
         self._storage.salvar_dados(self._crypto.criptografar(json.dumps(lista)))
 
+    def criptografar_payload(self, dados: dict) -> bytes:
+        """Criptografa um payload arbitrário com a mesma chave mestre do cofre.
+
+        Usado para gerar backups de exportação protegidos pela Chave Mestre,
+        em vez de JSON puro.
+
+        Args:
+            dados: Dicionário serializável a criptografar.
+
+        Returns:
+            Payload criptografado em bytes.
+        """
+        return self._crypto.criptografar(json.dumps(dados))
+
+    def descriptografar_payload(self, dados_criptografados: bytes) -> dict:
+        """Descriptografa um payload gerado por criptografar_payload().
+
+        Args:
+            dados_criptografados: Bytes produzidos por criptografar_payload().
+
+        Returns:
+            Dicionário original.
+
+        Raises:
+            ChaveMestreInvalidaError: Se a chave for inválida ou o payload corrompido.
+        """
+        return json.loads(self._crypto.descriptografar(dados_criptografados))
+
     def adicionar_credencial(self, credencial: Credencial) -> None:
         """Adiciona uma nova credencial ao repositório criptografado.
 
@@ -56,6 +90,9 @@ class PasswordManagerService:
             ChaveMestreInvalidaError: Se a chave fornecida for inválida.
         """
         banco: list[dict[str, str]] = self._ler_repositorio()
+        agora = _agora_iso()
+        credencial.criado_em = credencial.criado_em or agora
+        credencial.atualizado_em = agora
         banco.append(credencial.to_dict())
         self._salvar_repositorio(banco)
 
@@ -109,6 +146,8 @@ class PasswordManagerService:
         banco: list[dict[str, str]] = self._ler_repositorio()
         for i, item in enumerate(banco):
             if item["nome"] == nome and item["email"] == email:
+                nova.criado_em = item.get("criado_em", "") or _agora_iso()
+                nova.atualizado_em = _agora_iso()
                 banco[i] = nova.to_dict()
                 self._salvar_repositorio(banco)
                 return True

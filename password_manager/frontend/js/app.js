@@ -1,7 +1,7 @@
 import { st } from './state.js';
-import { toast, copyText, downloadBlob, initBackground, esc, initial } from './utils.js';
-import { listar, adicionar, atualizar, remover, exportar, importar, resetVault } from './api.js';
-import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved } from './prefs.js';
+import { toast, copyText, downloadBlob, initBackground, esc, initial, passwordStrength, timeAgo, parseCsv } from './utils.js';
+import { listar, adicionar, atualizar, remover, exportar, importar, importarCriptografado, resetVault } from './api.js';
+import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved, getAutoLockMinutes, setAutoLockMinutes } from './prefs.js';
 
 const key = (c) => `${c.nome}::${c.email}`;
 
@@ -53,6 +53,7 @@ export async function login() {
     document.getElementById('new-vault-btn').style.display = 'none';
     showApp();
     await loadCredentials();
+    resetLockTimer();
   } catch (e) {
     st.masterKey = null;
     if (e.status === 401) {
@@ -68,6 +69,7 @@ export async function login() {
 }
 
 export function logout() {
+  clearTimeout(_lockTimer);
   sessionStorage.removeItem('pm_key');
   localStorage.removeItem('pm_key');
   st.masterKey = null;
@@ -88,10 +90,44 @@ export function toggleMasterVis() {
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
 
+// ── Bloqueio automático por inatividade ──────────────────────────────
+let _lockTimer = null;
+
+function resetLockTimer() {
+  clearTimeout(_lockTimer);
+  if (!st.masterKey) return;
+  const minutes = getAutoLockMinutes();
+  if (!minutes) return;
+  _lockTimer = setTimeout(lockVault, minutes * 60 * 1000);
+}
+
+function lockVault() {
+  if (!st.masterKey) return;
+  st.masterKey = null;
+  st.credentials = []; st.filtered = [];
+  st.activeKey = null; st.activeCred = null;
+  _hideDetail();
+  _hideForm();
+  showLogin();
+  document.getElementById('master-key-input').value = '';
+  renderList();
+  toast('Cofre bloqueado por inatividade.', 'warn', 4000);
+}
+
+export function changeAutoLock(val) {
+  setAutoLockMinutes(Number(val));
+  resetLockTimer();
+}
+
+['mousemove', 'keydown', 'mousedown', 'scroll', 'touchstart'].forEach(evt =>
+  document.addEventListener(evt, resetLockTimer, { passive: true })
+);
+
 // ── Carregar credenciais ───────────────────────────────────────────
 async function loadCredentials() {
   try {
     st.credentials = await listar();
+    updateDupBadge();
     applyFilter();
     renderList();
     updateFooter();
@@ -103,12 +139,72 @@ async function loadCredentials() {
 
 function applyFilter() {
   const q = st.searchQuery.toLowerCase();
-  if (!q) { st.filtered = [...st.credentials]; return; }
-  st.filtered = st.credentials.filter(c =>
+  let base = !q ? st.credentials : st.credentials.filter(c =>
     c.nome.toLowerCase().includes(q) ||
     c.email.toLowerCase().includes(q) ||
     (c.url || '').toLowerCase().includes(q)
   );
+  if (st.showDuplicatesOnly) {
+    const counts = passwordCounts();
+    base = base.filter(c => c.senha && counts.get(c.senha) > 1);
+  }
+  st.filtered = sortCreds(base);
+}
+
+// ── Senhas reutilizadas ──────────────────────────────────────────────
+function passwordCounts() {
+  const counts = new Map();
+  for (const c of st.credentials) {
+    if (!c.senha) continue;
+    counts.set(c.senha, (counts.get(c.senha) || 0) + 1);
+  }
+  return counts;
+}
+
+function updateDupBadge() {
+  const counts = passwordCounts();
+  const dupCount = st.credentials.filter(c => c.senha && counts.get(c.senha) > 1).length;
+  const btn = document.getElementById('dup-toggle-btn');
+  if (!dupCount) {
+    btn.hidden = true;
+    st.showDuplicatesOnly = false;
+    return;
+  }
+  btn.hidden = false;
+  btn.textContent = `♻️ ${dupCount}`;
+  btn.title = st.showDuplicatesOnly
+    ? 'Mostrando apenas senhas reutilizadas — clique para ver todas'
+    : `${dupCount} senha(s) reutilizada(s) em mais de uma conta — clique para filtrar`;
+  btn.classList.toggle('btn-primary', st.showDuplicatesOnly);
+  btn.classList.toggle('btn-ghost', !st.showDuplicatesOnly);
+}
+
+export function toggleDuplicatesFilter() {
+  st.showDuplicatesOnly = !st.showDuplicatesOnly;
+  applyFilter();
+  renderList();
+  updateDupBadge();
+}
+
+// ── Ordenação ──────────────────────────────────────────────────────
+function sortCreds(list) {
+  const dir = st.sortDir === 'desc' ? -1 : 1;
+  return [...list].sort((a, b) => {
+    let va, vb;
+    if (st.sortKey === 'atualizado') { va = a.atualizado_em || ''; vb = b.atualizado_em || ''; }
+    else if (st.sortKey === 'dominio') { va = domainOf(a.url || ''); vb = domainOf(b.url || ''); }
+    else { va = a.nome.toLowerCase(); vb = b.nome.toLowerCase(); }
+    if (va < vb) return -1 * dir;
+    if (va > vb) return 1 * dir;
+    return 0;
+  });
+}
+
+export function onSortChange(val) {
+  const [sortKey, sortDir] = val.split('-');
+  st.sortKey = sortKey; st.sortDir = sortDir;
+  applyFilter();
+  renderList();
 }
 
 // ── Busca ──────────────────────────────────────────────────────────
@@ -129,9 +225,10 @@ function renderList() {
   const badge = document.getElementById('cred-count');
 
   if (!st.filtered.length) {
-    el.innerHTML = `<div class="list-empty"><div class="ei">🔑</div>${
-      st.searchQuery ? 'Nenhum resultado.' : 'Nenhuma credencial ainda.'
-    }</div>`;
+    const msg = st.searchQuery
+      ? 'Nenhum resultado.'
+      : (st.showDuplicatesOnly ? 'Nenhuma senha duplicada. 🎉' : 'Nenhuma credencial ainda.');
+    el.innerHTML = `<div class="list-empty"><div class="ei">🔑</div>${msg}</div>`;
     badge.hidden = true;
     return;
   }
@@ -139,9 +236,14 @@ function renderList() {
   badge.hidden = false;
   badge.textContent = st.filtered.length;
 
+  const counts = passwordCounts();
+
   el.innerHTML = st.filtered.map(c => {
     const dom = c.url ? domainOf(c.url) : '';
     const hasNote = Boolean(c.observacao && c.observacao.trim());
+    const isDup = Boolean(c.senha && counts.get(c.senha) > 1);
+    const strength = passwordStrength(c.senha);
+    const updated = timeAgo(c.atualizado_em);
     return `
     <div class="vault-row${key(c) === st.activeKey ? ' active' : ''}"
          onclick="selectCred(${esc(JSON.stringify(key(c)))})"
@@ -151,9 +253,23 @@ function renderList() {
         <div class="vault-row-name">${esc(c.nome)}</div>
         <div class="vault-row-email">${esc(c.email)}</div>
       </div>
-      <div class="vault-row-domain">${dom ? `🔗 ${esc(dom)}` : ''}</div>
-      <div class="vault-row-badges">${hasNote ? '<span title="Tem observação">📝</span>' : ''}</div>
+      <div class="vault-row-meta">
+        <div class="vault-row-meta-top">
+          ${dom ? `<span class="vault-row-domain">🔗 ${esc(dom)}</span>` : ''}
+          ${isDup ? '<span title="Senha reutilizada em outra conta">♻️</span>' : ''}
+          ${hasNote ? '<span title="Tem observação">📝</span>' : ''}
+        </div>
+        <div class="vault-row-meta-bottom">
+          <span class="pw-strength-dot ${strength.cls}" title="Força da senha: ${strength.label}"></span>
+          <span class="vault-row-updated" title="Última atualização">${esc(updated)}</span>
+        </div>
+      </div>
       <div class="vault-row-actions">
+        ${c.url ? `<button class="icon-btn" title="Abrir URL" onclick="event.stopPropagation();openUrl(${esc(JSON.stringify(c.url))})">🌐</button>` : ''}
+        <button class="icon-btn" title="Copiar e-mail"
+          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.email))}, this)">📧</button>
+        <button class="icon-btn" title="Copiar senha"
+          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.senha))}, this)">🔑</button>
         <button class="icon-btn del" title="Excluir"
           onclick="event.stopPropagation();openDeleteModal(${esc(JSON.stringify(key(c)))})">🗑</button>
       </div>
@@ -178,11 +294,16 @@ export function selectCred(k) {
 // ── Detail modal ───────────────────────────────────────────────────
 function openDetailModal(c) {
   document.getElementById('detail-title').textContent = c.nome;
+  const metaEl = document.getElementById('detail-meta');
+  const criado = c.criado_em ? `Criada ${timeAgo(c.criado_em)}` : 'Data de criação desconhecida';
+  const atualizado = c.atualizado_em && c.atualizado_em !== c.criado_em ? ` · Atualizada ${timeAgo(c.atualizado_em)}` : '';
+  metaEl.textContent = criado + atualizado;
   document.getElementById('detail-del-btn').onclick = () => openDeleteModal(key(c));
+  const isDup = Boolean(c.senha && passwordCounts().get(c.senha) > 1);
   document.getElementById('detail-fields').innerHTML = `
     ${fieldRow('🌐', 'URL', c.url, 'url', c.url)}
     ${fieldRow('📧', 'E-mail', c.email, 'email', c.email)}
-    ${pwFieldRow(c.senha)}
+    ${pwFieldRow(c.senha, isDup)}
     ${fieldRow('📝', 'Observação', c.observacao, 'obs')}
   `;
   document.getElementById('detail-overlay').classList.add('open');
@@ -220,12 +341,16 @@ function fieldRow(icon, label, value, type = '', raw = '') {
     </div>`;
 }
 
-function pwFieldRow(senha) {
+function pwFieldRow(senha, isDup = false) {
+  const strength = passwordStrength(senha);
+  const dupTag = isDup
+    ? ' <span class="pw-strength-tag pw-dup" title="Esta senha também é usada em outra conta">♻ Reutilizada</span>'
+    : '';
   return `
     <div class="field-row">
       <div class="field-row-icon">🔑</div>
       <div class="field-row-body">
-        <div class="field-row-label">Senha</div>
+        <div class="field-row-label">Senha <span class="pw-strength-tag ${strength.cls}">${strength.label}</span>${dupTag}</div>
         <div class="field-row-value mono" id="pw-display">••••••••</div>
       </div>
       <div class="field-row-btns">
@@ -424,9 +549,20 @@ export async function confirmDelete() {
 // ── Exportar ───────────────────────────────────────────────────────
 export async function doExport() {
   try {
-    const { blob, filename } = await exportar();
+    const { blob, filename } = await exportar(false);
     downloadBlob(blob, filename);
     toast('Backup exportado!', 'success');
+  } catch (e) {
+    if (e.status === 401) { onUnauthorized(); return; }
+    toast('Erro ao exportar: ' + e.message, 'error');
+  }
+}
+
+export async function doExportEncrypted() {
+  try {
+    const { blob, filename } = await exportar(true);
+    downloadBlob(blob, filename);
+    toast('Backup criptografado exportado! A mesma Chave Mestre é necessária para reimportá-lo.', 'success', 5000);
   } catch (e) {
     if (e.status === 401) { onUnauthorized(); return; }
     toast('Erro ao exportar: ' + e.message, 'error');
@@ -438,29 +574,79 @@ export function doImport() {
   document.getElementById('import-input').click();
 }
 
+// Converte um CSV exportado do Chrome/Edge/Brave ou Firefox para o
+// formato de importação da API ({ version, senhas: [...] }).
+function csvToImportPayload(text) {
+  const rows = parseCsv(text).filter(r => r.length && r.some(v => v.trim() !== ''));
+  if (!rows.length) throw new Error('arquivo CSV vazio.');
+
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const idx = (...names) => {
+    for (const n of names) {
+      const i = header.indexOf(n);
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+
+  const iName = idx('name');
+  const iUrl  = idx('url', 'login_uri');
+  const iUser = idx('username', 'login_username');
+  const iPass = idx('password', 'login_password');
+  const iNote = idx('note', 'notes', 'extra');
+
+  if (iUser === -1 || iPass === -1) {
+    throw new Error('formato não reconhecido (esperado export do Chrome/Edge ou Firefox).');
+  }
+
+  const senhas = rows.slice(1).map(r => {
+    const url = (r[iUrl] ?? '').trim();
+    let nome = (iName !== -1 ? r[iName] : '').trim();
+    if (!nome) {
+      try { nome = new URL(url).hostname.replace(/^www\./, ''); } catch { nome = url || 'Sem nome'; }
+    }
+    return {
+      nome,
+      url,
+      email: (r[iUser] ?? '').trim(),
+      senha: (r[iPass] ?? '').trim(),
+      observacao: iNote !== -1 ? (r[iNote] ?? '').trim() : '',
+    };
+  }).filter(c => c.email || c.senha);
+
+  return { version: 1, senhas };
+}
+
 export async function onImportFile(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
 
-  let payload;
+  const name = file.name.toLowerCase();
+  const isCsv = name.endsWith('.csv');
+  const isEnc = name.endsWith('.enc');
+
+  let result;
   try {
-    payload = JSON.parse(await file.text());
-  } catch {
-    toast('Arquivo inválido: não é um JSON válido.', 'error');
+    if (isEnc) {
+      result = await importarCriptografado(await file.arrayBuffer());
+    } else {
+      const text = await file.text();
+      const payload = isCsv ? csvToImportPayload(text) : JSON.parse(text);
+      result = await importar(payload);
+    }
+  } catch (e) {
+    if (e.status === 401) { onUnauthorized(); return; }
+    if (isEnc) toast('Backup criptografado inválido ou Chave Mestre incorreta: ' + e.message, 'error');
+    else if (isCsv) toast('CSV inválido: ' + e.message, 'error');
+    else toast('Arquivo inválido: não é um JSON válido.', 'error');
     return;
   }
 
-  try {
-    const result = await importar(payload);
-    const msg = `${result.senhas_importadas} senha(s) importada(s)` +
-      (result.senhas_ignoradas ? `, ${result.senhas_ignoradas} já existiam.` : '.');
-    toast(msg, 'success', 4000);
-    await loadCredentials();
-  } catch (e) {
-    if (e.status === 401) { onUnauthorized(); return; }
-    toast('Erro ao importar: ' + e.message, 'error');
-  }
+  const msg = `${result.senhas_importadas} senha(s) importada(s)` +
+    (result.senhas_ignoradas ? `, ${result.senhas_ignoradas} já existiam.` : '.');
+  toast(msg, 'success', 4000);
+  await loadCredentials();
 }
 
 // ── Conexão ────────────────────────────────────────────────────────
@@ -475,22 +661,13 @@ async function checkConn() {
 }
 
 // ── Settings Modal Tabs & Bookmarklet ──────────────────────────────
-export function switchSettingsTab(tab) {
-  const btnApp = document.getElementById('tab-btn-appearance');
-  const btnInt = document.getElementById('tab-btn-integration');
-  const contentApp = document.getElementById('tab-content-appearance');
-  const contentInt = document.getElementById('tab-content-integration');
+const SETTINGS_TABS = ['appearance', 'security', 'integration'];
 
-  if (tab === 'appearance') {
-    btnApp.classList.add('active');
-    btnInt.classList.remove('active');
-    contentApp.style.display = 'block';
-    contentInt.style.display = 'none';
-  } else {
-    btnApp.classList.remove('active');
-    btnInt.classList.add('active');
-    contentApp.style.display = 'none';
-    contentInt.style.display = 'flex';
+export function switchSettingsTab(tab) {
+  for (const t of SETTINGS_TABS) {
+    document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`tab-content-${t}`).style.display =
+      t === tab ? (t === 'integration' ? 'flex' : 'block') : 'none';
   }
 }
 
@@ -501,6 +678,7 @@ export function openSettingsModal() {
   document.getElementById('settings-static').checked = getCrtStatic();
   document.getElementById('settings-curved').checked = getCrtCurved();
   document.getElementById('settings-theme').value = getCrtTheme();
+  document.getElementById('settings-autolock').value = String(getAutoLockMinutes());
   switchSettingsTab('appearance');
 }
 
@@ -734,13 +912,13 @@ function initBookmarklet() {
 // ── Expor ao DOM ───────────────────────────────────────────────────
 Object.assign(window, {
   login, logout, toggleMasterVis,
-  onSearch,
+  onSearch, onSortChange, toggleDuplicatesFilter,
   selectCred,
   startEdit, startNew, cancelForm, saveForm, toggleFormPwVis,
   togglePwVis, doCopy, openUrl,
   closeDetailModal,
   openDeleteModal, closeDeleteModal, confirmDelete,
-  doExport,
+  doExport, doExportEncrypted,
   openKeyGenModal, closeKeyGenModal, regenerateKey, copyGeneratedKey, useGeneratedKey,
   createNewVault,
   doImport, onImportFile,
@@ -750,6 +928,7 @@ Object.assign(window, {
   toggleStatic: setCrtStatic,
   toggleCurved: setCrtCurved,
   changeTheme: setCrtTheme,
+  changeAutoLock,
   switchSettingsTab,
 });
 
@@ -763,6 +942,7 @@ Object.assign(window, {
     try {
       showApp();
       await loadCredentials();
+      resetLockTimer();
     } catch {
       showLogin();
     }

@@ -79,3 +79,65 @@ export function esc(s) {
 export function initial(nome) {
   return (nome || '?').trim()[0].toUpperCase();
 }
+
+// ── Força da senha (heurística local, sem dependências) ────────────
+export function passwordStrength(pw) {
+  if (!pw) return { score: 0, label: 'Vazia', cls: 'pw-empty' };
+  if (pw.length < 6) return { score: 0, label: 'Fraca', cls: 'pw-weak' };
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/\d/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (score <= 1) return { score, label: 'Fraca', cls: 'pw-weak' };
+  if (score <= 3) return { score, label: 'Média', cls: 'pw-medium' };
+  return { score, label: 'Forte', cls: 'pw-strong' };
+}
+
+// ── Parser CSV simples (RFC4180: aspas, vírgulas e quebras de linha) ──
+export function parseCsv(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else {
+      field += c;
+    }
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// ── Tempo relativo (para criado_em / atualizado_em) ─────────────────
+export function timeAgo(iso) {
+  if (!iso) return 'data desconhecida';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'data desconhecida';
+  const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (sec < 60) return 'agora mesmo';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `há ${min} min`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `há ${hr}h`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `há ${day}d`;
+  const mon = Math.floor(day / 30);
+  if (mon < 12) return `há ${mon} ${mon === 1 ? 'mês' : 'meses'}`;
+  const yr = Math.floor(day / 365);
+  return `há ${yr} ${yr === 1 ? 'ano' : 'anos'}`;
+}

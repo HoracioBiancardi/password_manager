@@ -19,12 +19,15 @@ class Credencial:
     email: str
     senha: str
     observacao: str = ""
+    criado_em: str = ""
+    atualizado_em: str = ""
 
     def to_dict(self) -> dict[str, str]:
         """Serializa a credencial para um dicionário.
 
         Returns:
-            Dicionário com os campos 'nome', 'url', 'email', 'senha' e 'observacao'.
+            Dicionário com os campos 'nome', 'url', 'email', 'senha', 'observacao',
+            'criado_em' e 'atualizado_em'.
         """
         return {
             "nome": self.nome,
@@ -32,6 +35,8 @@ class Credencial:
             "email": self.email,
             "senha": self.senha,
             "observacao": self.observacao,
+            "criado_em": self.criado_em,
+            "atualizado_em": self.atualizado_em,
         }
 
     @classmethod
@@ -40,7 +45,8 @@ class Credencial:
 
         Args:
             data: Dicionário com chaves 'nome', 'url', 'email' e 'senha'.
-                Os campos 'url' e 'observacao' são opcionais para compatibilidade com dados antigos.
+                Os campos 'url', 'observacao', 'criado_em' e 'atualizado_em' são
+                opcionais para compatibilidade com dados antigos.
 
         Returns:
             Instância de Credencial populada.
@@ -51,4 +57,6 @@ class Credencial:
             email=data["email"],
             senha=data["senha"],
             observacao=data.get("observacao", ""),
+            criado_em=data.get("criado_em", ""),
+            atualizado_em=data.get("atualizado_em", ""),
         )

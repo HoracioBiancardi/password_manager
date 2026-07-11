@@ -5,6 +5,7 @@ const FLICKER_KEY = 'pm-crt-flicker';
 const THEME_KEY = 'pm-crt-theme';
 const STATIC_KEY = 'pm-crt-static';
 const CURVED_KEY = 'pm-crt-curved';
+const AUTOLOCK_KEY = 'pm-autolock-minutes';
 
 export function getCrtScanlines() {
   const saved = localStorage.getItem(SCANLINES_KEY);
@@ -65,6 +66,18 @@ export function setCrtTheme(theme) {
   document.body.classList.add('theme-' + theme);
   const el = document.getElementById('settings-theme');
   if (el) el.value = theme;
+}
+
+// ── Bloqueio automático por inatividade ─────────────────────────────
+export function getAutoLockMinutes() {
+  const saved = localStorage.getItem(AUTOLOCK_KEY);
+  return saved === null ? 5 : Number(saved); // padrão: 5 minutos
+}
+
+export function setAutoLockMinutes(minutes) {
+  localStorage.setItem(AUTOLOCK_KEY, String(minutes));
+  const el = document.getElementById('settings-autolock');
+  if (el) el.value = String(minutes);
 }
 
 export function openSettingsModal() {

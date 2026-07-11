@@ -9,4 +9,7 @@ export const st = {
   searchQuery: '',
   pendingDelete: null,
   freshKey: false,   // true quando a chave veio do gerador (não do vault existente)
+  sortKey: 'nome',   // 'nome' | 'atualizado' | 'dominio'
+  sortDir: 'asc',    // 'asc' | 'desc'
+  showDuplicatesOnly: false,
 };

@@ -21,6 +21,8 @@ class CredencialOut(BaseModel):
     email: str
     senha: str
     observacao: str = ""
+    criado_em: str = ""
+    atualizado_em: str = ""
 
 
 class AtualizarIn(BaseModel):

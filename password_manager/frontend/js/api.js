@@ -44,11 +44,11 @@ export async function remover(nome, email) {
   await apiFetch(`/credenciais/?nome=${encodeURIComponent(nome)}&email=${encodeURIComponent(email)}`, { method: 'DELETE' });
 }
 
-export async function exportar() {
-  const r = await apiFetch('/io/export');
+export async function exportar(criptografado = false) {
+  const r = await apiFetch(`/io/export${criptografado ? '?criptografado=true' : ''}`);
   const blob = await r.blob();
   const cd = r.headers.get('Content-Disposition') || '';
-  const fn = cd.match(/filename="([^"]+)"/)?.[1] || 'pm-backup.json';
+  const fn = cd.match(/filename="([^"]+)"/)?.[1] || (criptografado ? 'pm-backup.enc' : 'pm-backup.json');
   return { blob, filename: fn };
 }
 
@@ -56,6 +56,15 @@ export async function importar(payload) {
   const r = await apiFetch('/io/import', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+  return r.json();
+}
+
+export async function importarCriptografado(arrayBuffer) {
+  const r = await apiFetch('/io/import-encrypted', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: arrayBuffer,
   });
   return r.json();
 }
