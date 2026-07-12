@@ -1,25 +1,32 @@
-# Password Manager
+# Password Manager (PM Vault)
 
-Gerenciador de senhas local com criptografia Fernet (AES-128-CBC + HMAC-SHA256), interface CLI, API REST e página web de gestão.
+Gerenciador de senhas local com criptografia Fernet (AES-128-CBC + HMAC-SHA256), API REST (FastAPI) e interface web servida pela própria API — sem envio de dados para servidores externos. Inclui também uma extensão de navegador e um bookmarklet para preencher formulários de login automaticamente.
+
+> Não há mais CLI neste projeto (foi removida — veja o histórico do git). Todo o uso é feito pela API + interface web.
 
 ## Funcionalidades
 
-- Criptografia simétrica com chave mestre Fernet
-- CLI completa: adicionar, buscar, atualizar, listar e remover
-- API REST local (FastAPI) com autenticação por header
-- Interface web servida pela própria API
+- Criptografia simétrica com chave mestre Fernet; a chave nunca é armazenada pelo servidor
+- API REST local (FastAPI) com autenticação por header `X-Master-Key`, servida junto com a interface web
 - Busca por nome de serviço, URL ou e-mail (case-insensitive)
-- Chave mestre digitada a cada uso ou salva em `.env` local
+- Indicador de força de senha e detecção de senhas reutilizadas (com filtro rápido) na lista
+- Ordenação da lista por nome, data de atualização ou domínio
+- Ações rápidas no hover de cada credencial: copiar e-mail, copiar senha, abrir URL, excluir
+- Bloqueio automático do cofre por inatividade (configurável em Configurações > Segurança)
+- Exportação em JSON puro ou em backup criptografado (`.enc`) com a própria Chave Mestre
+- Importação de JSON, backup criptografado (`.enc`) ou CSV exportado do Chrome/Edge/Brave/Firefox
+- Extensão de navegador (Manifest V3) e bookmarklet para autofill de credenciais em qualquer site
+- Chave mestre digitada a cada uso, com opção de "lembrar" (localStorage) ou manter só na sessão (sessionStorage)
 - Arquitetura SOLID com injeção de dependências
 
 ## Tecnologias
 
 - Python 3.10+
 - [cryptography](https://cryptography.io) — Fernet
-- [Typer](https://typer.tiangolo.com) + [Rich](https://rich.readthedocs.io) — CLI
 - [FastAPI](https://fastapi.tiangolo.com) + [Uvicorn](https://www.uvicorn.org) — API e frontend
 - [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) — configuração via `.env`
 - [uv](https://docs.astral.sh/uv/) — gerenciamento de dependências
+- JavaScript puro (ES modules), sem framework nem build step, no frontend
 
 ## Instalação
 
@@ -33,58 +40,45 @@ uv venv
 uv pip install -e .
 ```
 
-## Configuração inicial
+## Executando
 
 ```bash
-# Ativar o ambiente
 source .venv/bin/activate
-
-# Gerar a chave mestre e salvar no .env
-pm gerar-chave --salvar
+pm
+# → http://127.0.0.1:8080         (interface web)
+# → http://127.0.0.1:8080/docs    (documentação OpenAPI)
 ```
 
-A chave é salva em `.password-manager/.env`. **Guarde uma cópia em local seguro — sem ela as senhas não podem ser recuperadas.**
+Na primeira execução, digite a chave mestre desejada na tela de login — o cofre é criado automaticamente na primeira credencial salva. **Guarde essa chave em local seguro: sem ela, os dados criptografados não podem ser recuperados.** A chave também pode ser fixada em `.password-manager/.env` (variável `MASTER_KEY`) para não precisar digitá-la — não recomendado em máquinas compartilhadas.
 
-> O diretório `.password-manager/` está no `.gitignore` e nunca será versionado.
+> O diretório `.password-manager/` (contém `.env` e o cofre `senhas.enc`) está no `.gitignore` e nunca é versionado.
 
-## CLI
+## Endpoints da API
 
-```bash
-pm gerar-chave          # Gera uma nova chave mestre
-pm gerar-chave --salvar # Gera e salva no .env
-
-pm adicionar            # Adiciona uma credencial
-pm buscar <termo>       # Busca por nome, URL ou e-mail
-pm atualizar <termo>    # Edita uma credencial existente
-pm listar               # Lista serviços e e-mails (sem senhas)
-pm remover <termo>      # Remove uma credencial
-```
-
-Se `MASTER_KEY` estiver no `.env`, a chave é carregada automaticamente. Caso contrário, é solicitada via prompt.
-
-## Interface web e API
-
-```bash
-pm-api
-# Servidor em http://127.0.0.1:8000
-# Documentação: http://127.0.0.1:8000/docs
-```
-
-Acesse `http://127.0.0.1:8000` no navegador para a interface de gestão.
-
-### Endpoints
+Todas as rotas abaixo (exceto `/` e `/health`) exigem o header `X-Master-Key`.
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | `GET` | `/` | Interface web |
 | `GET` | `/health` | Status da API |
-| `GET` | `/credenciais/` | Listar todas |
-| `GET` | `/credenciais/buscar?termo=...` | Buscar |
-| `POST` | `/credenciais/` | Adicionar |
-| `PATCH` | `/credenciais/` | Atualizar |
-| `DELETE` | `/credenciais/?nome=...&email=...` | Remover |
+| `GET` | `/api/credenciais/` | Listar todas |
+| `GET` | `/api/credenciais/buscar?termo=...` | Buscar por nome, URL ou e-mail |
+| `POST` | `/api/credenciais/` | Adicionar |
+| `PATCH` | `/api/credenciais/` | Atualizar |
+| `DELETE` | `/api/credenciais/?nome=...&email=...` | Remover |
+| `GET` | `/api/io/export?criptografado=false` | Exportar (JSON puro ou `.enc`) |
+| `POST` | `/api/io/import` | Importar backup JSON |
+| `POST` | `/api/io/import-encrypted` | Importar backup `.enc` |
+| `DELETE` | `/api/io/vault` | Apagar todo o cofre |
 
-Todas as rotas (exceto `/` e `/health`) exigem o header `X-Master-Key`.
+## Extensão de navegador e bookmarklet
+
+Para preencher formulários de login automaticamente:
+
+- **Extensão** (recomendada): Manifest V3, funciona em qualquer site. Veja `browser-extension/README.md` para instalar via `chrome://extensions`.
+- **Bookmarklet**: alternativa sem instalação, arrastada para a barra de favoritos a partir da própria interface web. Sites com política de segurança de conteúdo (CSP) restritiva — GitHub, Google, redes sociais, bancos — bloqueiam scripts de bookmarklet; nesses casos, use a extensão.
+
+Ambos conversam diretamente com a API local (`http://127.0.0.1:8080/api`), então o servidor (`pm`) precisa estar rodando.
 
 ## Estrutura do projeto
 
@@ -92,7 +86,7 @@ Todas as rotas (exceto `/` e `/health`) exigem o header `X-Master-Key`.
 password_manager/
 ├── password_manager/
 │   ├── models/
-│   │   └── credencial.py          # Entidade Credencial
+│   │   └── credencial.py          # Entidade Credencial (com criado_em/atualizado_em)
 │   ├── storage/
 │   │   ├── interface.py           # StorageInterface (DIP)
 │   │   └── file_storage.py        # Persistência em arquivo .enc
@@ -101,14 +95,18 @@ password_manager/
 │   ├── services/
 │   │   └── password_manager_service.py  # Regras de negócio
 │   ├── api/
-│   │   ├── app.py                 # FastAPI app
-│   │   ├── routes.py              # Endpoints
+│   │   ├── app.py                 # FastAPI app, entrypoint `pm`
+│   │   ├── routes.py              # /api/credenciais/*
+│   │   ├── routes_io.py           # /api/io/* (export/import/reset)
 │   │   ├── schemas.py             # Schemas Pydantic
 │   │   └── dependencies.py        # Injeção de dependências
 │   ├── frontend/
-│   │   └── index.html             # Interface web
+│   │   ├── index.html             # Interface web
+│   │   ├── js/                    # app.js, api.js, state.js, prefs.js, utils.js
+│   │   └── css/                   # design-system.css, app.css
 │   ├── config.py                  # Pydantic Settings
 │   └── exceptions.py              # ChaveMestreInvalidaError
+├── browser-extension/              # Extensão Manifest V3 + instruções de instalação
 ├── pyproject.toml
 └── .gitignore
 ```
@@ -116,6 +114,11 @@ password_manager/
 ## Segurança
 
 - As senhas são armazenadas em `.password-manager/senhas.enc` — criptografadas e nunca em texto puro no disco
-- A chave mestre nunca é armazenada pelo servidor; ela trafega apenas pelo header `X-Master-Key` em cada requisição
+- A chave mestre nunca é armazenada pelo servidor; ela trafega apenas pelo header `X-Master-Key` em cada requisição, e no frontend fica só em localStorage/sessionStorage (client-side)
 - O diretório `.password-manager/` está no `.gitignore`
-- A API escuta somente em `127.0.0.1` (localhost)
+- A API escuta somente em `127.0.0.1` (localhost); o CORS é aberto (`allow_origins=["*"]`) por ser uma ferramenta local de usuário único
+- O cofre pode ser bloqueado automaticamente por inatividade (Configurações > Segurança)
+
+## Testes
+
+Não há testes automatizados no repositório ainda (`pytest` está listado como dependência de desenvolvimento em `pyproject.toml`, mas não há arquivos de teste). Também não há lint/format configurado.

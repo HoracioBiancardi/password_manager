@@ -757,7 +757,7 @@ function initBookmarklet() {
       sessionStorage.setItem('pm_vault_key', k);
       currentMasterKey = k;
 
-      const term = window.location.hostname.replace(/^www\\\\./, '');
+      const term = window.location.hostname.replace(/^www\\./, '');
       const resDiv = div.querySelector('#pm-results');
       resDiv.innerHTML = 'Buscando...';
 
@@ -858,7 +858,7 @@ function initBookmarklet() {
     div.querySelector('#pm-btn-add-show').onclick = () => {
       if (addPanel.style.display === 'none') {
         addPanel.style.display = 'flex';
-        div.querySelector('#pm-add-name').value = window.location.hostname.replace(/^www\\\\./, '');
+        div.querySelector('#pm-add-name').value = window.location.hostname.replace(/^www\\./, '');
         div.querySelector('#pm-add-url').value = window.location.href;
         
         const detected = detectFields();
@@ -902,7 +902,7 @@ function initBookmarklet() {
     if (currentMasterKey) loadCreds();
   })()`;
 
-  const compressed = code.replace(/\\s+/g, ' ');
+  const compressed = code.replace(/\s+/g, ' ');
   const link = document.getElementById('bookmarklet-link');
   if (link) {
     link.href = compressed;
