@@ -1,6 +1,6 @@
 # Password Manager (PM Vault)
 
-Gerenciador de senhas local com criptografia Fernet (AES-128-CBC + HMAC-SHA256), API REST (FastAPI) e interface web servida pela própria API — sem envio de dados para servidores externos. Inclui também uma extensão de navegador e um bookmarklet para preencher formulários de login automaticamente.
+Gerenciador de senhas local com criptografia Fernet (AES-128-CBC + HMAC-SHA256), API REST (FastAPI) e interface web servida pela própria API — sem envio de dados para servidores externos. Além de senhas de sites, também guarda segredos de sistema-a-sistema (tokens, API keys) com ambiente e data de expiração. Inclui também uma extensão de navegador e um bookmarklet para preencher formulários de login automaticamente.
 
 > Não há mais CLI neste projeto (foi removida — veja o histórico do git). Todo o uso é feito pela API + interface web.
 
@@ -10,6 +10,11 @@ Gerenciador de senhas local com criptografia Fernet (AES-128-CBC + HMAC-SHA256),
 - API REST local (FastAPI) com autenticação por header `X-Master-Key`, servida junto com a interface web
 - Busca por nome de serviço, URL ou e-mail (case-insensitive)
 - Indicador de força de senha e detecção de senhas reutilizadas (com filtro rápido) na lista
+- Credenciais categorizadas por tipo (senha/token/api_key/secret) e ambiente (dev/staging/prod), pensadas
+  também para segredos de sistema-a-sistema, não só senhas de site
+- Alerta de expiração: badge por credencial e resumo ao desbloquear o cofre quando a data de expiração
+  estiver próxima (limite configurável em Configurações > Alertas, padrão 30 dias) — os campos novos
+  trafegam pelos mesmos endpoints `POST`/`PATCH /api/credenciais/` já existentes
 - Ordenação da lista por nome, data de atualização ou domínio
 - Ações rápidas no hover de cada credencial: copiar e-mail, copiar senha, abrir URL, excluir
 - Bloqueio automático do cofre por inatividade (configurável em Configurações > Segurança)
@@ -86,7 +91,7 @@ Ambos conversam diretamente com a API local (`http://127.0.0.1:8080/api`), entã
 password_manager/
 ├── password_manager/
 │   ├── models/
-│   │   └── credencial.py          # Entidade Credencial (com criado_em/atualizado_em)
+│   │   └── credencial.py          # Entidade Credencial (com criado_em/atualizado_em/tipo/ambiente/expira_em)
 │   ├── storage/
 │   │   ├── interface.py           # StorageInterface (DIP)
 │   │   └── file_storage.py        # Persistência em arquivo .enc
@@ -103,7 +108,7 @@ password_manager/
 │   ├── frontend/
 │   │   ├── index.html             # Interface web
 │   │   ├── js/                    # app.js, api.js, state.js, prefs.js, utils.js
-│   │   └── css/                   # design-system.css, app.css
+│   │   └── css/                   # theme.css, app.css
 │   ├── config.py                  # Pydantic Settings
 │   └── exceptions.py              # ChaveMestreInvalidaError
 ├── browser-extension/              # Extensão Manifest V3 + instruções de instalação

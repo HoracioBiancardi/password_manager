@@ -9,7 +9,11 @@ from password_manager.storage.interface import StorageInterface
 
 
 def _agora_iso() -> str:
-    """Retorna o instante atual em UTC no formato ISO 8601."""
+    """Retorna o instante atual em UTC no formato ISO 8601.
+
+    Returns:
+        String com o timestamp atual em UTC, formato ISO 8601.
+    """
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -30,7 +34,7 @@ class PasswordManagerService:
         self._crypto: CryptoService = crypto
         self._storage: StorageInterface = storage
 
-    def _ler_repositorio(self) -> list[dict[str, str]]:
+    def _ler_repositorio(self) -> list[dict[str, str | bool]]:
         """Carrega e descriptografa o repositório completo de credenciais.
 
         Returns:
@@ -44,7 +48,7 @@ class PasswordManagerService:
             return []
         return json.loads(self._crypto.descriptografar(dados_raw))
 
-    def _salvar_repositorio(self, lista: list[dict[str, str]]) -> None:
+    def _salvar_repositorio(self, lista: list[dict[str, str | bool]]) -> None:
         """Serializa, criptografa e persiste a lista de credenciais.
 
         Args:
@@ -89,7 +93,7 @@ class PasswordManagerService:
         Raises:
             ChaveMestreInvalidaError: Se a chave fornecida for inválida.
         """
-        banco: list[dict[str, str]] = self._ler_repositorio()
+        banco: list[dict[str, str | bool]] = self._ler_repositorio()
         agora = _agora_iso()
         credencial.criado_em = credencial.criado_em or agora
         credencial.atualizado_em = agora
@@ -108,7 +112,7 @@ class PasswordManagerService:
         Raises:
             ChaveMestreInvalidaError: Se a chave fornecida for inválida.
         """
-        banco: list[dict[str, str]] = self._ler_repositorio()
+        banco: list[dict[str, str | bool]] = self._ler_repositorio()
         termo_lower: str = termo.lower()
         return [
             Credencial.from_dict(item)
@@ -143,7 +147,7 @@ class PasswordManagerService:
         Raises:
             ChaveMestreInvalidaError: Se a chave fornecida for inválida.
         """
-        banco: list[dict[str, str]] = self._ler_repositorio()
+        banco: list[dict[str, str | bool]] = self._ler_repositorio()
         for i, item in enumerate(banco):
             if item["nome"] == nome and item["email"] == email:
                 nova.criado_em = item.get("criado_em", "") or _agora_iso()
@@ -166,7 +170,7 @@ class PasswordManagerService:
         Raises:
             ChaveMestreInvalidaError: Se a chave fornecida for inválida.
         """
-        banco: list[dict[str, str]] = self._ler_repositorio()
+        banco: list[dict[str, str | bool]] = self._ler_repositorio()
         banco_filtrado = [
             item for item in banco
             if not (item["nome"] == nome and item["email"] == email)

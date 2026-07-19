@@ -1,5 +1,8 @@
 """Serviço de criptografia baseado em Fernet (AES-128-CBC + HMAC-SHA256)."""
 
+import base64
+import hashlib
+
 from cryptography.fernet import Fernet, InvalidToken
 
 from password_manager.exceptions import ChaveMestreInvalidaError
@@ -29,8 +32,6 @@ class CryptoService:
             self._fernet: Fernet = Fernet(chave_mestre.encode())
         except Exception:
             # Caso contrário (qualquer senha comum), derivamos a chave usando SHA-256
-            import base64
-            import hashlib
             hash_bytes = hashlib.sha256(chave_mestre.encode()).digest()
             chave_derivada = base64.urlsafe_b64encode(hash_bytes).decode()
             self._fernet = Fernet(chave_derivada.encode())

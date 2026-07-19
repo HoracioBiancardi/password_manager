@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@~/.claude/python-code-standards.md
+
 ## Project overview
 
-Local password manager ("PM Vault"): FastAPI backend + vanilla JS frontend + a browser extension/bookmarklet for autofill. Passwords are encrypted at rest with Fernet (AES-128-CBC + HMAC-SHA256) and never stored server-side — the master key travels only in the `X-Master-Key` request header and is held client-side (localStorage/sessionStorage/chrome.storage).
+Local password manager ("PM Vault"): FastAPI backend + vanilla JS frontend + a browser extension/bookmarklet for autofill. Beyond website passwords, it also stores system-to-system secrets (API tokens, keys) with an environment tag and an expiration date. Passwords are encrypted at rest with Fernet (AES-128-CBC + HMAC-SHA256) and never stored server-side — the master key travels only in the `X-Master-Key` request header and is held client-side (localStorage/sessionStorage/chrome.storage).
 
 There is no CLI anymore (it was removed — see git history); everything goes through the API + web UI.
 
@@ -33,7 +35,10 @@ Backend follows a SOLID/DIP layered design under `password_manager/`:
 ```
 models/credencial.py          → Credencial dataclass (nome, url, email, senha, observacao, criado_em,
                                  atualizado_em — timestamps are set/refreshed by the service layer, not
-                                 the caller)
+                                 the caller — plus tipo/ambiente/expira_em for system-to-system secrets:
+                                 tipo is 'senha'/'token'/'api_key'/'secret', ambiente is 'dev'/'staging'/
+                                 'prod', expira_em is an ISO date used for the frontend's expiring-soon
+                                 alert)
 storage/interface.py          → StorageInterface (ABC): salvar_dados/carregar_dados
 storage/file_storage.py       → FileStorage: writes/reads the encrypted blob to .password-manager/senhas.enc
 crypto/crypto_service.py      → CryptoService: Fernet encrypt/decrypt; derives a key via SHA-256 if the
@@ -68,16 +73,19 @@ Plain ES modules, no build step or framework:
 - `js/state.js` — single shared mutable `st` object (masterKey, credentials, filtered, sortKey/sortDir, showDuplicatesOnly, active/editing state)
 - `js/api.js` — thin fetch wrapper (`apiFetch`) that injects `X-Master-Key` and normalizes 401s into `{status: 401}` errors
 - `js/app.js` — all UI logic: auth flow, list/detail/edit rendering, CRUD calls, import/export, vault reset, auto-lock timer, sorting, duplicate-password detection (imports from api.js/state.js/utils.js/prefs.js)
-- `js/prefs.js` — "Pip-Boy CRT" visual theme preferences (scanlines, flicker, static, curved screen, color theme) *and* the auto-lock timeout setting, all persisted to localStorage and applied on boot
+- `js/prefs.js` — "Pip-Boy CRT" visual theme preferences (scanlines, flicker, static, curved screen, color theme), the auto-lock timeout setting, *and* the expiring-credential alert threshold (`getExpiringAlertDays`/`setExpiringAlertDays`, default 30 days), all persisted to localStorage and applied on boot
 - `js/utils.js` — toast notifications, clipboard copy, blob download, `passwordStrength()`, `parseCsv()`, `timeAgo()`, misc DOM helpers
-- `css/design-system.css` + `css/app.css` — the CRT/retro design system and app-specific styles
+- `css/theme.css` + `css/app.css` — base UI components (buttons, modals, forms, layout) and the CRT/Pip-Boy
+  visual theme, plus app-specific styles. Named `theme.css` rather than `design-system.css` because it's
+  specific to this project, not a reusable cross-project design system.
 
 The master key is asked for at login and kept only client-side; "remember" checkbox chooses localStorage vs sessionStorage persistence.
 
 List/detail features layered onto the base CRUD UI (all client-side, in `app.js`):
 
-- Auto-lock: any of `mousemove`/`keydown`/`mousedown`/`scroll`/`touchstart` resets an inactivity timer (`resetLockTimer`); on expiry `lockVault()` clears `st.masterKey` in memory and returns to the login screen. Timeout is configurable in Configurações > Segurança (1/5/15/30 min or disabled), default 5 min, stored via `getAutoLockMinutes`/`setAutoLockMinutes` in `prefs.js`. This only protects the in-memory session — it does not touch the persisted key in local/sessionStorage.
+- Auto-lock: any of `mousemove`/`keydown`/`mousedown`/`scroll`/`touchstart` resets an inactivity timer (`resetLockTimer`); on expiry `lockVault()` clears `st.masterKey` in memory *and* removes the persisted key (`pm_chave_mestre`, plus the legacy `pm_key` name) from both `localStorage`/`sessionStorage`, same as the manual "Bloquear" button (`logout()`) — so a refresh after either always lands back on the login screen and requires the master key again, even if "remember" was checked. Timeout is configurable in Configurações > Segurança (1/5/15/30 min or disabled), default 5 min, stored via `getAutoLockMinutes`/`setAutoLockMinutes` in `prefs.js`.
 - Password strength dot and reused-password detection (`♻️` badge + "show duplicates only" filter) are computed client-side over the already-decrypted `st.credentials` list — nothing extra is sent to the API.
+- Expiring-credential alerts: same client-side pattern as duplicate detection, computed from each credential's `expira_em` against the configurable threshold (Configurações > Alertas, default 30 days). Shows a per-row badge (`⛔` expired / `⏰` expiring soon), a "show expiring only" toolbar filter (`⏰ {count}` button, mirrors the duplicates one), and a dismissible summary banner above the toolbar after unlocking the vault.
 - Sorting (nome/atualizado_em/domínio, asc/desc) and quick hover row actions (copy e-mail, copy senha, open URL, delete) operate on the same in-memory list without opening the detail modal.
 - CSV import accepts Chrome/Edge/Brave or Firefox password exports (`csvToImportPayload` in `app.js` sniffs the header row) and converts them client-side into the same JSON shape as `/api/io/import`; `.enc` files go to `/api/io/import-encrypted` instead.
 

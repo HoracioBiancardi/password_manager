@@ -18,6 +18,13 @@
   display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
   box-shadow: 0 0 24px rgba(59,130,246,.5);
 }
+/* Nos temas retrô a caixa usa a cor do fósforo em vez do gradiente azul/roxo
+   "moderno", que ficava destoando do resto da tela CRT monocromática */
+body.theme-green .login-icon, body.theme-amber .login-icon,
+body.theme-blue .login-icon, body.theme-white .login-icon {
+  background: var(--primary);
+  box-shadow: 0 0 24px var(--glow-color);
+}
 .login-title {
   font-size: 1.375rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
   background: linear-gradient(100deg, #93c5fd 0%, #c4b5fd 50%, #f9a8d4 100%);
@@ -40,6 +47,8 @@
 .form-input::placeholder { color: rgba(139,163,199,.35); }
 .form-input:focus { border-color: var(--primary); box-shadow: var(--glow-ring); }
 
+input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px; }
+
 .form-textarea {
   resize: vertical; min-height: 72px; line-height: 1.6;
 }
@@ -60,6 +69,11 @@
 .conn-badge {
   font-size: .7rem; padding: .2rem .55rem; border-radius: 5px;
   background: rgba(239,68,68,.15); color: #f87171; border: 1px solid rgba(239,68,68,.2);
+  display: inline-flex; align-items: center; gap: .35rem;
+}
+.conn-badge::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
 }
 .conn-badge.online {
   background: rgba(16,185,129,.15); color: #34d399; border-color: rgba(16,185,129,.2);
@@ -182,16 +196,27 @@
 }
 
 /* ── Botão de cofre novo (aparece em erro 401 com chave nova) ────── */
-.btn-vault-reset {
+.btn-cofre-reset {
   background: var(--danger-dim);
   color: var(--danger);
   border: 1px solid rgba(248,81,73,.25);
   width: 100%; justify-content: center; font-size: .78rem;
 }
-.btn-vault-reset:hover:not(:disabled) {
+.btn-cofre-reset:hover:not(:disabled) {
   background: rgba(248,81,73,.18);
   border-color: rgba(248,81,73,.45);
 }
+
+/* ── Banner de credenciais expirando ─────────────────────────────── */
+.banner-alert {
+  font-size: .72rem; color: var(--warn);
+  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.2);
+  border-bottom: 1px solid var(--border);
+  padding: .5rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  flex-shrink: 0; cursor: pointer;
+}
+.banner-alert:hover { background: rgba(210,153,34,.14); }
 
 /* ── Contagem de registros ───────────────────────────────────────── */
 .count-badge {
@@ -201,6 +226,6 @@
 
 /* ── Seletor de ordenação (toolbar) ──────────────────────────────── */
 .sort-select {
-  width: auto; max-width: 168px;
-  padding: .3rem .5rem; font-size: .74rem;
+  width: auto; max-width: 220px;
+  padding: .38rem .9rem; font-size: .8rem;
 }

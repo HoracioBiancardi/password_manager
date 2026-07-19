@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/design-system.css">
+  <link rel="stylesheet" href="/static/css/theme.css">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 
@@ -30,7 +30,13 @@
   <div class="overlay login-overlay" id="login-overlay">
     <div class="modal glass login-modal">
       <div class="login-brand">
-        <div class="login-icon">🔐</div>
+        <div class="login-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" stroke-width="1.8" />
+            <path d="M8 11V7a4 4 0 018 0v4" stroke="rgba(255,255,255,.75)" stroke-width="1.8" stroke-linecap="round" />
+            <circle cx="12" cy="16" r="1.5" fill="rgba(255,255,255,.85)" />
+          </svg>
+        </div>
         <div>
           <div class="login-title">PM Vault</div>
           <div class="login-sub">Gerenciador de Senhas</div>
@@ -42,7 +48,7 @@
         <div class="pw-wrap">
           <input id="master-key-input" type="password" class="form-input" placeholder="Cole sua chave Fernet…"
             autocomplete="off" onkeydown="if(event.key==='Enter') login()">
-          <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">👁</button>
+          <button class="pw-toggle" onclick="toggleMasterVis()" title="Mostrar/ocultar">SHOW</button>
         </div>
         <p class="form-hint">Usada apenas para descriptografar o cofre. Não é armazenada em disco.</p>
       </div>
@@ -57,19 +63,19 @@
       <div class="modal-footer" style="padding-top:.25rem;flex-direction:column;gap:.6rem">
         <button class="btn btn-primary" id="login-btn" onclick="login()"
           style="width:100%;justify-content:center;padding:.65rem">
-          🔓 Desbloquear
+          Desbloquear
         </button>
         <button class="btn btn-ghost" onclick="openKeyGenModal()"
           style="width:100%;justify-content:center;font-size:.78rem">
-          ✨ Gerar nova Chave Mestre
+          Gerar nova Chave Mestre
         </button>
         <button class="btn btn-ghost" onclick="openSettingsModal()"
           style="width:100%;justify-content:center;font-size:.78rem">
-          ⚙️ Aparência
+          Configurações
         </button>
-        <button class="btn btn-vault-reset" id="new-vault-btn" onclick="createNewVault()"
+        <button class="btn btn-cofre-reset" id="new-cofre-btn" onclick="createNewVault()"
           style="display:none">
-          🗑 Criar cofre vazio (apaga todos os dados)
+          Criar cofre vazio (apaga todos os dados)
         </button>
       </div>
     </div>
@@ -80,7 +86,7 @@
     <div class="modal glass" style="max-width:480px">
       <div class="modal-header">
         <h2>Nova Chave Mestre</h2>
-        <button class="close-btn" onclick="closeKeyGenModal()">✕</button>
+        <button class="close-btn" onclick="closeKeyGenModal()">X</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:.9rem">
         <p class="form-hint" style="opacity:1">
@@ -90,19 +96,19 @@
         <div class="keygen-key-box">
           <code id="keygen-key-text"></code>
           <button class="copy-btn" id="keygen-copy-btn" onclick="copyGeneratedKey(this)"
-            title="Copiar chave">📋</button>
+            title="Copiar chave">COPY</button>
         </div>
-        <p class="keygen-warning">⚠ Esta chave não é armazenada em lugar nenhum. Copie agora.</p>
+        <p class="keygen-warning">Esta chave não é armazenada em lugar nenhum. Copie agora.</p>
         <p class="keygen-warning"
           style="color:#f87171;border-color:rgba(248,113,113,.18);background:rgba(248,113,113,.07)">
-          🗄 Chave nova = cofre novo. Se você já tem um <code style="font-size:.7rem">senhas.enc</code>,
-          ele continuará cifrado com a chave anterior. Use a chave nova apenas para um vault vazio ou após exportar seus
+          Chave nova = cofre novo. Se você já tem um <code style="font-size:.7rem">senhas.enc</code>,
+          ele continuará cifrado com a chave anterior. Use a chave nova apenas para um cofre vazio ou após exportar seus
           dados.
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="regenerateKey()">🔄 Gerar outra</button>
-        <button class="btn btn-primary" onclick="useGeneratedKey()">Usar esta chave →</button>
+        <button class="btn btn-ghost" onclick="regenerateKey()">Gerar outra</button>
+        <button class="btn btn-primary" onclick="useGeneratedKey()">Usar esta chave</button>
       </div>
     </div>
   </div>
@@ -123,28 +129,35 @@
       </div>
     </div>
     <div class="topbar-right">
-      <span id="conn-badge" class="conn-badge">● offline</span>
-      <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup em JSON puro (legível, sem senha)">⬇ Exportar</button>
-      <button class="btn btn-ghost btn-sm" onclick="doExportEncrypted()" title="Exportar backup criptografado (.enc) — precisa da mesma Chave Mestre para reimportar">🔒 Exportar cripto</button>
-      <button class="btn btn-ghost btn-sm" onclick="doImport()" title="Importar backup JSON/.enc do PM Vault ou senhas exportadas do Chrome/Edge/Firefox (CSV)">⬆ Importar</button>
+      <span id="conn-badge" class="conn-badge">offline</span>
+      <button class="btn btn-ghost btn-sm" onclick="doExport()" title="Exportar backup em JSON puro (legível, sem senha)">Exportar</button>
+      <button class="btn btn-ghost btn-sm" onclick="doExportEncrypted()" title="Exportar backup criptografado (.enc) — precisa da mesma Chave Mestre para reimportar">Exportar cripto</button>
+      <button class="btn btn-ghost btn-sm" onclick="doImport()" title="Importar backup JSON/.enc do PM Vault ou senhas exportadas do Chrome/Edge/Firefox (CSV)">Importar</button>
       <input type="file" id="import-input" accept=".json,.csv,.enc" style="display:none" onchange="onImportFile(this)">
-      <button class="btn btn-ghost btn-sm" onclick="openSettingsModal()" title="Configurações de Aparência">⚙️ Aparência</button>
-      <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">🔒 Bloquear</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSettingsModal()" title="Configurações">Configurações</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()" title="Bloquear cofre">Bloquear</button>
     </div>
   </div>
 
   <!-- ── APP ────────────────────────────────────────────────────────────── -->
   <div class="app-layout" id="app-layout" style="display:none">
 
-    <div class="vault-toolbar">
+    <div class="banner-alert" id="health-banner" onclick="dismissHealthBanner()" hidden></div>
+
+    <div class="cofre-toolbar">
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">/</span>
         <input type="text" placeholder="Buscar serviço, e-mail, URL…" oninput="onSearch(this.value)"
           autocomplete="off">
       </div>
       <div class="toolbar-right">
         <span class="count-badge" id="cred-count" hidden>0</span>
-        <button class="btn btn-ghost btn-sm" id="dup-toggle-btn" onclick="toggleDuplicatesFilter()" hidden></button>
+        <div class="toolbar-badges">
+          <button class="btn btn-ghost btn-sm" id="dup-toggle-btn" onclick="toggleDuplicatesFilter()" hidden></button>
+          <button class="btn btn-ghost btn-sm" id="expiring-toggle-btn" onclick="toggleExpiringFilter()" hidden></button>
+          <button class="btn btn-ghost btn-sm" id="weak-toggle-btn" onclick="toggleWeakFilter()" hidden></button>
+        </div>
+        <div class="toolbar-divider"></div>
         <select id="sort-select" class="form-input sort-select" title="Ordenar por" onchange="onSortChange(this.value)">
           <option value="nome-asc">Nome (A–Z)</option>
           <option value="nome-desc">Nome (Z–A)</option>
@@ -152,17 +165,19 @@
           <option value="atualizado-asc">Mais antigas</option>
           <option value="dominio-asc">Domínio (A–Z)</option>
         </select>
-        <button class="btn btn-primary btn-sm" onclick="startNew()">+ Nova</button>
+        <button class="btn btn-primary btn-sm btn-nova" onclick="startNew()">+ Nova</button>
       </div>
     </div>
 
-    <div id="cred-list" class="vault-list">
+    <div class="tag-chip-row" id="tag-chip-row" hidden></div>
+
+    <div id="cred-list" class="cofre-list">
       <div class="list-empty">
-        <div class="ei">⏳</div>Carregando…
+        Carregando…
       </div>
     </div>
 
-    <div class="vault-footer" id="sidebar-footer">–</div>
+    <div class="cofre-footer" id="sidebar-footer">–</div>
   </div>
 
   <!-- ── DETAIL MODAL ──────────────────────────────────────────────────── -->
@@ -174,9 +189,10 @@
           <div class="detail-meta" id="detail-meta"></div>
         </div>
         <div class="detail-header-actions">
-          <button class="btn btn-ghost btn-sm" onclick="startEdit()">✏️ Editar</button>
-          <button class="btn btn-danger btn-sm" id="detail-del-btn">🗑 Excluir</button>
-          <button class="close-btn" onclick="closeDetailModal()">✕</button>
+          <button class="btn btn-ghost btn-sm" id="detail-fav-btn">*</button>
+          <button class="btn btn-ghost btn-sm" onclick="startEdit()">Editar</button>
+          <button class="btn btn-danger btn-sm" id="detail-del-btn">Excluir</button>
+          <button class="close-btn" onclick="closeDetailModal()">X</button>
         </div>
       </div>
       <div id="detail-fields" class="detail-body"></div>
@@ -188,13 +204,22 @@
     <div class="modal glass form-modal">
       <div class="modal-header">
         <h2 id="form-title-label">Nova Credencial</h2>
-        <button class="close-btn" onclick="cancelForm()">✕</button>
+        <button class="close-btn" onclick="cancelForm()">X</button>
       </div>
 
       <div class="cred-form">
         <div class="form-group">
           <label class="form-label" for="f-nome">Serviço / Nome *</label>
           <input id="f-nome" type="text" class="form-input" placeholder="ex: GitHub, Gmail…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-tipo">Tipo</label>
+          <select id="f-tipo" class="form-input">
+            <option value="senha">Senha</option>
+            <option value="token">Token</option>
+            <option value="api_key">API Key</option>
+            <option value="secret">Secret</option>
+          </select>
         </div>
         <div class="form-group">
           <label class="form-label" for="f-url">URL</label>
@@ -208,8 +233,25 @@
           <label class="form-label" for="f-senha">Senha *</label>
           <div class="pw-wrap">
             <input id="f-senha" type="password" class="form-input" placeholder="••••••••" autocomplete="new-password">
-            <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">👁</button>
+            <button class="pw-toggle" onclick="toggleFormPwVis()" title="Mostrar/ocultar">SHOW</button>
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-ambiente">Ambiente</label>
+          <select id="f-ambiente" class="form-input">
+            <option value="">N/A</option>
+            <option value="dev">Dev</option>
+            <option value="staging">Staging</option>
+            <option value="prod">Prod</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-expira">Expira em</label>
+          <input id="f-expira" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-tags">Tags</label>
+          <input id="f-tags" type="text" class="form-input" placeholder="trabalho, infra…" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label" for="f-obs">Observação</label>
@@ -218,8 +260,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="cancelForm()">✕ Cancelar</button>
-        <button class="btn btn-primary" id="save-btn" onclick="saveForm()">💾 Salvar</button>
+        <button class="btn btn-ghost" onclick="cancelForm()">Cancelar</button>
+        <button class="btn btn-primary" id="save-btn" onclick="saveForm()">Salvar</button>
       </div>
     </div>
   </div>
@@ -229,7 +271,7 @@
     <div class="modal glass">
       <div class="modal-header">
         <h2>Excluir credencial</h2>
-        <button class="close-btn" onclick="closeDeleteModal()">✕</button>
+        <button class="close-btn" onclick="closeDeleteModal()">X</button>
       </div>
       <div class="modal-body">
         Deseja excluir permanentemente <strong id="del-name"></strong>?<br>
@@ -247,12 +289,13 @@
     <div class="modal glass" style="max-width:400px">
       <div class="modal-header">
         <h2>Configurações e Integração</h2>
-        <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+        <button class="close-btn" onclick="closeSettingsModal()">X</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem">
         <div class="tab-buttons" style="display:flex;gap:.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem;margin-bottom:.5rem">
           <button class="btn btn-ghost btn-sm active" id="tab-btn-appearance" onclick="switchSettingsTab('appearance')" style="flex:1;justify-content:center">Aparência</button>
           <button class="btn btn-ghost btn-sm" id="tab-btn-security" onclick="switchSettingsTab('security')" style="flex:1;justify-content:center">Segurança</button>
+          <button class="btn btn-ghost btn-sm" id="tab-btn-alerts" onclick="switchSettingsTab('alerts')" style="flex:1;justify-content:center">Alertas</button>
           <button class="btn btn-ghost btn-sm" id="tab-btn-integration" onclick="switchSettingsTab('integration')" style="flex:1;justify-content:center">Integração</button>
         </div>
 
@@ -277,9 +320,9 @@
                 <input type="checkbox" id="settings-curved" onchange="toggleCurved(this.checked)">
                 <span>Ativar tela curvada e vinheta (Curved Glass)</span>
               </label>
-              <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                <label for="settings-theme" style="font-size: 0.8125rem; color: var(--text-muted);">Tema de Cor:</label>
-                <select id="settings-theme" class="form-input" style="flex: 1; padding: 0.25rem 0.5rem;" onchange="changeTheme(this.value)">
+              <div style="margin-top: 0.25rem;">
+                <label for="settings-theme" style="display:block; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: .3rem;">Tema de Cor:</label>
+                <select id="settings-theme" class="form-input" style="padding: 0.4rem 0.6rem; font-size: .8rem;" onchange="changeTheme(this.value)">
                   <option value="green">Verde Fósforo (Classic Pip-Boy)</option>
                   <option value="amber">Âmbar Radiação (Fallout NV)</option>
                   <option value="blue">Azul HUD (Fallout 4)</option>
@@ -307,6 +350,24 @@
           </div>
         </div>
 
+        <!-- ── TAB ALERTS ── -->
+        <div class="settings-tab-content" id="tab-content-alerts" style="display:none">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Alerta de expiração</label>
+            <p class="form-hint" style="margin-top:-.15rem;margin-bottom:.6rem">
+              Credenciais com data de expiração definida ganham um aviso na lista e um
+              resumo ao desbloquear o cofre quando faltar este número de dias ou menos.
+            </p>
+            <select id="settings-expiring-days" class="form-input" onchange="changeExpiringDays(this.value)">
+              <option value="7">7 dias</option>
+              <option value="14">14 dias</option>
+              <option value="30">30 dias</option>
+              <option value="60">60 dias</option>
+              <option value="90">90 dias</option>
+            </select>
+          </div>
+        </div>
+
         <!-- ── TAB INTEGRATION ── -->
         <div class="settings-tab-content" id="tab-content-integration" style="display:none;flex-direction:column;gap:.8rem">
           <p style="font-size:.75rem;opacity:.85;line-height:1.4">Adicione o auto-preenchimento ao Chrome ou Firefox:</p>
@@ -315,9 +376,9 @@
             <label class="form-label" style="margin-bottom:.2rem">Bookmarklet (Sem Instalação)</label>
             <p style="font-size:.67rem;color:var(--text-muted);margin-bottom:.5rem;line-height:1.4">Arraste o botão abaixo para a sua barra de favoritos (Bookmarks Bar):</p>
             <a href="#" id="bookmarklet-link" class="btn btn-primary" style="width:100%;justify-content:center;font-size:.72rem;padding:.4rem;text-decoration:none;display:inline-flex" title="Arraste para a barra de favoritos" onclick="event.preventDefault(); alert('Arraste este botão para a sua barra de favoritos (Bookmarks Bar) do navegador.');">
-              🟢 Preencher com PM Vault
+              Preencher com PM Vault
             </a>
-            <p style="font-size:.64rem;color:var(--text-muted);margin-top:.5rem;line-height:1.4">⚠️ Alguns sites (ex: GitHub, Google, redes sociais, bancos) bloqueiam favoritos de script por política de segurança (CSP) e o painel não abrirá. Nesses casos, use a Extensão de Navegador abaixo.</p>
+            <p style="font-size:.64rem;color:var(--text-muted);margin-top:.5rem;line-height:1.4">Alguns sites (ex: GitHub, Google, redes sociais, bancos) bloqueiam favoritos de script por política de segurança (CSP) e o painel não abrirá. Nesses casos, use a Extensão de Navegador abaixo.</p>
           </div>
 
           <div style="border:1px dashed var(--border);padding:.6rem;border-radius:var(--r-md);background:var(--surface-alt)">

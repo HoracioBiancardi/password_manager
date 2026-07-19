@@ -6,6 +6,7 @@ const THEME_KEY = 'pm-crt-theme';
 const STATIC_KEY = 'pm-crt-static';
 const CURVED_KEY = 'pm-crt-curved';
 const AUTOLOCK_KEY = 'pm-autolock-minutes';
+const EXPIRING_DAYS_KEY = 'pm-expiring-alert-days';
 
 export function getCrtScanlines() {
   const saved = localStorage.getItem(SCANLINES_KEY);
@@ -80,17 +81,16 @@ export function setAutoLockMinutes(minutes) {
   if (el) el.value = String(minutes);
 }
 
-export function openSettingsModal() {
-  document.getElementById('settings-overlay').classList.add('open');
-  document.getElementById('settings-scanlines').checked = getCrtScanlines();
-  document.getElementById('settings-flicker').checked = getCrtFlicker();
-  document.getElementById('settings-static').checked = getCrtStatic();
-  document.getElementById('settings-curved').checked = getCrtCurved();
-  document.getElementById('settings-theme').value = getCrtTheme();
+// ── Alerta de expiração de credenciais ──────────────────────────────
+export function getExpiringAlertDays() {
+  const saved = localStorage.getItem(EXPIRING_DAYS_KEY);
+  return saved === null ? 30 : Number(saved); // padrão: 30 dias
 }
 
-export function closeSettingsModal() {
-  document.getElementById('settings-overlay').classList.remove('open');
+export function setExpiringAlertDays(days) {
+  localStorage.setItem(EXPIRING_DAYS_KEY, String(days));
+  const el = document.getElementById('settings-expiring-days');
+  if (el) el.value = String(days);
 }
 
 // Aplica as preferências salvas no boot

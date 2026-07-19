@@ -1,7 +1,7 @@
 import { st } from './state.js';
 import { toast, copyText, downloadBlob, initBackground, esc, initial, passwordStrength, timeAgo, parseCsv } from './utils.js';
 import { listar, adicionar, atualizar, remover, exportar, importar, importarCriptografado, resetVault } from './api.js';
-import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved, getAutoLockMinutes, setAutoLockMinutes } from './prefs.js';
+import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved, getAutoLockMinutes, setAutoLockMinutes, getExpiringAlertDays, setExpiringAlertDays } from './prefs.js';
 
 const key = (c) => `${c.nome}::${c.email}`;
 
@@ -19,7 +19,9 @@ function showApp() {
 }
 
 function onUnauthorized() {
+  sessionStorage.removeItem('pm_chave_mestre');
   sessionStorage.removeItem('pm_key');
+  localStorage.removeItem('pm_key');
   st.masterKey = null;
   _hideDetail();
   _hideForm();
@@ -42,15 +44,15 @@ export async function login() {
     
     const remember = document.getElementById('remember-key-checkbox').checked;
     if (remember) {
-      localStorage.setItem('pm_key', k);
-      sessionStorage.removeItem('pm_key');
+      localStorage.setItem('pm_chave_mestre', k);
+      sessionStorage.removeItem('pm_chave_mestre');
     } else {
-      sessionStorage.setItem('pm_key', k);
-      localStorage.removeItem('pm_key');
+      sessionStorage.setItem('pm_chave_mestre', k);
+      localStorage.removeItem('pm_chave_mestre');
     }
 
     st.freshKey = false;
-    document.getElementById('new-vault-btn').style.display = 'none';
+    document.getElementById('new-cofre-btn').style.display = 'none';
     showApp();
     await loadCredentials();
     resetLockTimer();
@@ -58,25 +60,27 @@ export async function login() {
     st.masterKey = null;
     if (e.status === 401) {
       toast('Senha incorreta para o cofre existente. Para redefinir usando esta senha, clique em "Criar cofre vazio" (atenção: apaga os dados atuais).', 'warn', 7000);
-      document.getElementById('new-vault-btn').style.display = '';
+      document.getElementById('new-cofre-btn').style.display = '';
     } else {
       toast(e.message, 'error');
     }
   } finally {
     btn.disabled = false;
-    btn.textContent = '🔓 Desbloquear';
+    btn.textContent = 'Desbloquear';
   }
 }
 
 export function logout() {
   clearTimeout(_lockTimer);
+  sessionStorage.removeItem('pm_chave_mestre');
+  localStorage.removeItem('pm_chave_mestre');
   sessionStorage.removeItem('pm_key');
   localStorage.removeItem('pm_key');
   st.masterKey = null;
   st.freshKey = false;
   st.credentials = []; st.filtered = [];
   st.activeKey = null; st.activeCred = null;
-  document.getElementById('new-vault-btn').style.display = 'none';
+  document.getElementById('new-cofre-btn').style.display = 'none';
   _hideDetail();
   _hideForm();
   showLogin();
@@ -103,6 +107,10 @@ function resetLockTimer() {
 
 function lockVault() {
   if (!st.masterKey) return;
+  sessionStorage.removeItem('pm_chave_mestre');
+  localStorage.removeItem('pm_chave_mestre');
+  sessionStorage.removeItem('pm_key');
+  localStorage.removeItem('pm_key');
   st.masterKey = null;
   st.credentials = []; st.filtered = [];
   st.activeKey = null; st.activeCred = null;
@@ -128,6 +136,10 @@ async function loadCredentials() {
   try {
     st.credentials = await listar();
     updateDupBadge();
+    updateExpiringBadge();
+    updateWeakBadge();
+    renderHealthBanner();
+    renderTagChips();
     applyFilter();
     renderList();
     updateFooter();
@@ -148,7 +160,47 @@ function applyFilter() {
     const counts = passwordCounts();
     base = base.filter(c => c.senha && counts.get(c.senha) > 1);
   }
+  if (st.showExpiringOnly) {
+    base = base.filter(c => expiryStatus(c));
+  }
+  if (st.showWeakOnly) {
+    base = base.filter(c => passwordStrength(c.senha).cls === 'pw-weak');
+  }
+  if (st.activeTagFilters.size) {
+    base = base.filter(c => parseTags(c).some(t => st.activeTagFilters.has(t)));
+  }
   st.filtered = sortCreds(base);
+}
+
+// ── Tags ───────────────────────────────────────────────────────────
+function parseTags(c) {
+  return (c.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+}
+
+function renderTagChips() {
+  const el = document.getElementById('tag-chip-row');
+  const todas = new Set();
+  for (const c of st.credentials) {
+    for (const t of parseTags(c)) todas.add(t);
+  }
+  if (!todas.size) {
+    el.hidden = true;
+    st.activeTagFilters.clear();
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = [...todas].sort().map(t => `
+    <button class="tag-chip${st.activeTagFilters.has(t) ? ' active' : ''}"
+      onclick="toggleTagFilter(${esc(JSON.stringify(t))})">${esc(t)}</button>
+  `).join('');
+}
+
+export function toggleTagFilter(tag) {
+  if (st.activeTagFilters.has(tag)) st.activeTagFilters.delete(tag);
+  else st.activeTagFilters.add(tag);
+  renderTagChips();
+  applyFilter();
+  renderList();
 }
 
 // ── Senhas reutilizadas ──────────────────────────────────────────────
@@ -171,7 +223,7 @@ function updateDupBadge() {
     return;
   }
   btn.hidden = false;
-  btn.textContent = `♻️ ${dupCount}`;
+  btn.textContent = `R ${dupCount}`;
   btn.title = st.showDuplicatesOnly
     ? 'Mostrando apenas senhas reutilizadas — clique para ver todas'
     : `${dupCount} senha(s) reutilizada(s) em mais de uma conta — clique para filtrar`;
@@ -186,10 +238,111 @@ export function toggleDuplicatesFilter() {
   updateDupBadge();
 }
 
+// ── Senhas fracas ──────────────────────────────────────────────────
+function weakCredentials() {
+  return st.credentials.filter(c => passwordStrength(c.senha).cls === 'pw-weak');
+}
+
+function updateWeakBadge() {
+  const items = weakCredentials();
+  const btn = document.getElementById('weak-toggle-btn');
+  if (!items.length) {
+    btn.hidden = true;
+    st.showWeakOnly = false;
+    return;
+  }
+  btn.hidden = false;
+  btn.textContent = `! ${items.length}`;
+  btn.title = st.showWeakOnly
+    ? 'Mostrando apenas senhas fracas — clique para ver todas'
+    : `${items.length} senha(s) fraca(s) — clique para filtrar`;
+  btn.classList.toggle('btn-primary', st.showWeakOnly);
+  btn.classList.toggle('btn-ghost', !st.showWeakOnly);
+}
+
+export function toggleWeakFilter() {
+  st.showWeakOnly = !st.showWeakOnly;
+  applyFilter();
+  renderList();
+  updateWeakBadge();
+}
+
+// ── Expiração de credenciais ──────────────────────────────────────
+function diasParaExpirar(expiraEm) {
+  if (!expiraEm) return null;
+  const alvo = new Date(expiraEm + 'T00:00:00');
+  if (Number.isNaN(alvo.getTime())) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hoje) / 86400000);
+}
+
+function expiryStatus(c) {
+  const dias = diasParaExpirar(c.expira_em);
+  if (dias === null) return null;
+  if (dias < 0) return 'expired';
+  if (dias <= getExpiringAlertDays()) return 'soon';
+  return null;
+}
+
+function expiringCredentials() {
+  return st.credentials.filter(c => expiryStatus(c));
+}
+
+function updateExpiringBadge() {
+  const items = expiringCredentials();
+  const btn = document.getElementById('expiring-toggle-btn');
+  if (!items.length) {
+    btn.hidden = true;
+    st.showExpiringOnly = false;
+    return;
+  }
+  btn.hidden = false;
+  btn.textContent = `~ ${items.length}`;
+  btn.title = st.showExpiringOnly
+    ? 'Mostrando apenas credenciais expirando — clique para ver todas'
+    : `${items.length} credencial(is) expirada(s) ou expirando em breve — clique para filtrar`;
+  btn.classList.toggle('btn-primary', st.showExpiringOnly);
+  btn.classList.toggle('btn-ghost', !st.showExpiringOnly);
+}
+
+export function toggleExpiringFilter() {
+  st.showExpiringOnly = !st.showExpiringOnly;
+  applyFilter();
+  renderList();
+  updateExpiringBadge();
+}
+
+function renderHealthBanner() {
+  const el = document.getElementById('health-banner');
+  const fracas = weakCredentials().length;
+  const counts = passwordCounts();
+  const reutilizadas = st.credentials.filter(c => c.senha && counts.get(c.senha) > 1).length;
+  const items = expiringCredentials();
+  const vencidas = items.filter(c => expiryStatus(c) === 'expired').length;
+  const vencendo = items.length - vencidas;
+
+  const partes = [];
+  if (fracas) partes.push(`${fracas} fraca(s)`);
+  if (reutilizadas) partes.push(`${reutilizadas} reutilizada(s)`);
+  if (vencidas) partes.push(`${vencidas} já expirada(s)`);
+  if (vencendo) partes.push(`${vencendo} expirando em breve`);
+
+  if (!partes.length) { el.hidden = true; return; }
+  el.textContent = `${partes.join(' · ')}. Clique para dispensar.`;
+  el.hidden = false;
+}
+
+export function dismissHealthBanner() {
+  document.getElementById('health-banner').hidden = true;
+}
+
 // ── Ordenação ──────────────────────────────────────────────────────
 function sortCreds(list) {
   const dir = st.sortDir === 'desc' ? -1 : 1;
   return [...list].sort((a, b) => {
+    const favDiff = Number(b.favorito) - Number(a.favorito);
+    if (favDiff) return favDiff;
     let va, vb;
     if (st.sortKey === 'atualizado') { va = a.atualizado_em || ''; vb = b.atualizado_em || ''; }
     else if (st.sortKey === 'dominio') { va = domainOf(a.url || ''); vb = domainOf(b.url || ''); }
@@ -227,8 +380,8 @@ function renderList() {
   if (!st.filtered.length) {
     const msg = st.searchQuery
       ? 'Nenhum resultado.'
-      : (st.showDuplicatesOnly ? 'Nenhuma senha duplicada. 🎉' : 'Nenhuma credencial ainda.');
-    el.innerHTML = `<div class="list-empty"><div class="ei">🔑</div>${msg}</div>`;
+      : (st.showDuplicatesOnly ? 'Nenhuma senha duplicada.' : 'Nenhuma credencial ainda.');
+    el.innerHTML = `<div class="list-empty">${msg}</div>`;
     badge.hidden = true;
     return;
   }
@@ -244,34 +397,42 @@ function renderList() {
     const isDup = Boolean(c.senha && counts.get(c.senha) > 1);
     const strength = passwordStrength(c.senha);
     const updated = timeAgo(c.atualizado_em);
+    const expiry = expiryStatus(c);
+    const expiryIcon = expiry === 'expired' ? 'X' : (expiry === 'soon' ? '~' : '');
+    const expiryTitle = expiry === 'expired' ? 'Credencial expirada' : (expiry === 'soon' ? 'Expirando em breve' : '');
+    const tags = parseTags(c);
     return `
-    <div class="vault-row${key(c) === st.activeKey ? ' active' : ''}"
+    <div class="cofre-row${key(c) === st.activeKey ? ' active' : ''}"
          onclick="selectCred(${esc(JSON.stringify(key(c)))})"
          title="${esc(c.nome)}">
-      <div class="vault-row-icon">${esc(initial(c.nome))}</div>
-      <div class="vault-row-main">
-        <div class="vault-row-name">${esc(c.nome)}</div>
-        <div class="vault-row-email">${esc(c.email)}</div>
+      <div class="cofre-row-icon">${esc(initial(c.nome))}${dom ? `<img src="https://${esc(dom)}/favicon.ico" alt="" onerror="this.remove()">` : ''}</div>
+      <div class="cofre-row-main">
+        <div class="cofre-row-name">${esc(c.nome)}${c.tipo && c.tipo !== 'senha' ? ` <span class="pw-strength-tag pw-empty">${esc(c.tipo)}</span>` : ''}</div>
+        <div class="cofre-row-email">${esc(c.email)}${c.ambiente ? ` · ${esc(c.ambiente)}` : ''}</div>
       </div>
-      <div class="vault-row-meta">
-        <div class="vault-row-meta-top">
-          ${dom ? `<span class="vault-row-domain">🔗 ${esc(dom)}</span>` : ''}
-          ${isDup ? '<span title="Senha reutilizada em outra conta">♻️</span>' : ''}
-          ${hasNote ? '<span title="Tem observação">📝</span>' : ''}
+      <div class="cofre-row-meta">
+        <div class="cofre-row-meta-top">
+          ${dom ? `<span class="cofre-row-domain">&gt; ${esc(dom)}</span>` : ''}
+          ${isDup ? '<span title="Senha reutilizada em outra conta">R</span>' : ''}
+          ${hasNote ? '<span title="Tem observação">...</span>' : ''}
+          ${expiryIcon ? `<span title="${expiryTitle}">${expiryIcon}</span>` : ''}
+          ${tags.length ? `<span title="Tags: ${esc(tags.join(', '))}"># ${tags.length}</span>` : ''}
         </div>
-        <div class="vault-row-meta-bottom">
+        <div class="cofre-row-meta-bottom">
           <span class="pw-strength-dot ${strength.cls}" title="Força da senha: ${strength.label}"></span>
-          <span class="vault-row-updated" title="Última atualização">${esc(updated)}</span>
+          <span class="cofre-row-updated" title="Última atualização">${esc(updated)}</span>
         </div>
       </div>
-      <div class="vault-row-actions">
-        ${c.url ? `<button class="icon-btn" title="Abrir URL" onclick="event.stopPropagation();openUrl(${esc(JSON.stringify(c.url))})">🌐</button>` : ''}
+      <div class="cofre-row-actions">
+        <button class="icon-btn star-btn${c.favorito ? ' active' : ''}" title="${c.favorito ? 'Remover dos favoritos' : 'Favoritar'}"
+          onclick="event.stopPropagation();toggleFavorito(${esc(JSON.stringify(key(c)))})">FAV</button>
+        ${c.url ? `<button class="icon-btn" title="Abrir URL" onclick="event.stopPropagation();openUrl(${esc(JSON.stringify(c.url))})">URL</button>` : ''}
         <button class="icon-btn" title="Copiar e-mail"
-          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.email))}, this)">📧</button>
+          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.email))}, this)">EMAIL</button>
         <button class="icon-btn" title="Copiar senha"
-          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.senha))}, this)">🔑</button>
+          onclick="event.stopPropagation();doCopy(${esc(JSON.stringify(c.senha))}, this)">SENHA</button>
         <button class="icon-btn del" title="Excluir"
-          onclick="event.stopPropagation();openDeleteModal(${esc(JSON.stringify(key(c)))})">🗑</button>
+          onclick="event.stopPropagation();openDeleteModal(${esc(JSON.stringify(key(c)))})">EXCLUIR</button>
       </div>
     </div>`;
   }).join('');
@@ -291,6 +452,27 @@ export function selectCred(k) {
   if (st.activeCred) openDetailModal(st.activeCred);
 }
 
+// ── Favoritos ──────────────────────────────────────────────────────
+export async function toggleFavorito(k) {
+  const c = st.credentials.find(c => key(c) === k);
+  if (!c) return;
+  const anterior = c.favorito;
+  c.favorito = !anterior;
+  applyFilter();
+  renderList();
+  if (st.activeCred && key(st.activeCred) === k) openDetailModal(c);
+  try {
+    await atualizar({ nome_atual: c.nome, email_atual: c.email, favorito: c.favorito });
+  } catch (e) {
+    c.favorito = anterior;
+    applyFilter();
+    renderList();
+    if (st.activeCred && key(st.activeCred) === k) openDetailModal(c);
+    if (e.status === 401) { onUnauthorized(); return; }
+    toast('Erro ao favoritar: ' + e.message, 'error');
+  }
+}
+
 // ── Detail modal ───────────────────────────────────────────────────
 function openDetailModal(c) {
   document.getElementById('detail-title').textContent = c.nome;
@@ -299,12 +481,20 @@ function openDetailModal(c) {
   const atualizado = c.atualizado_em && c.atualizado_em !== c.criado_em ? ` · Atualizada ${timeAgo(c.atualizado_em)}` : '';
   metaEl.textContent = criado + atualizado;
   document.getElementById('detail-del-btn').onclick = () => openDeleteModal(key(c));
+  const favBtn = document.getElementById('detail-fav-btn');
+  favBtn.textContent = c.favorito ? 'Favorito' : 'Favoritar';
+  favBtn.onclick = () => toggleFavorito(key(c));
   const isDup = Boolean(c.senha && passwordCounts().get(c.senha) > 1);
+  const tipoLabel = { senha: 'Senha', token: 'Token', api_key: 'API Key', secret: 'Secret' };
+  const ambienteLabel = { dev: 'Dev', staging: 'Staging', prod: 'Prod' };
   document.getElementById('detail-fields').innerHTML = `
-    ${fieldRow('🌐', 'URL', c.url, 'url', c.url)}
-    ${fieldRow('📧', 'E-mail', c.email, 'email', c.email)}
+    ${fieldRow('#', 'Tipo', tipoLabel[c.tipo] || 'Senha')}
+    ${fieldRow('&gt;', 'URL', c.url, 'url', c.url)}
+    ${fieldRow('@', 'E-mail', c.email, 'email', c.email)}
     ${pwFieldRow(c.senha, isDup)}
-    ${fieldRow('📝', 'Observação', c.observacao, 'obs')}
+    ${fieldRow('ENV', 'Ambiente', ambienteLabel[c.ambiente] || '')}
+    ${fieldRow('EXP', 'Expira em', c.expira_em)}
+    ${fieldRow('...', 'Observação', c.observacao, 'obs')}
   `;
   document.getElementById('detail-overlay').classList.add('open');
 }
@@ -328,7 +518,7 @@ function fieldRow(icon, label, value, type = '', raw = '') {
   const valContent = empty ? '—' : esc(value);
   const urlClick   = isUrl ? `onclick="openUrl(${esc(JSON.stringify(value))})"` : '';
   const copyBtn    = !empty && !isObs
-    ? `<button class="copy-btn" title="Copiar" onclick="doCopy(${esc(JSON.stringify(raw || value))}, this)">📋</button>`
+    ? `<button class="copy-btn" title="Copiar" onclick="doCopy(${esc(JSON.stringify(raw || value))}, this)">COPY</button>`
     : '';
   return `
     <div class="field-row">
@@ -344,20 +534,20 @@ function fieldRow(icon, label, value, type = '', raw = '') {
 function pwFieldRow(senha, isDup = false) {
   const strength = passwordStrength(senha);
   const dupTag = isDup
-    ? ' <span class="pw-strength-tag pw-dup" title="Esta senha também é usada em outra conta">♻ Reutilizada</span>'
+    ? ' <span class="pw-strength-tag pw-dup" title="Esta senha também é usada em outra conta">Reutilizada</span>'
     : '';
   return `
     <div class="field-row">
-      <div class="field-row-icon">🔑</div>
+      <div class="field-row-icon">KEY</div>
       <div class="field-row-body">
         <div class="field-row-label">Senha <span class="pw-strength-tag ${strength.cls}">${strength.label}</span>${dupTag}</div>
         <div class="field-row-value mono" id="pw-display">••••••••</div>
       </div>
       <div class="field-row-btns">
         <button class="copy-btn" title="Mostrar/ocultar"
-          onclick="togglePwVis(${esc(JSON.stringify(senha))}, this)">👁</button>
+          onclick="togglePwVis(${esc(JSON.stringify(senha))}, this)">SHOW</button>
         <button class="copy-btn" title="Copiar senha"
-          onclick="doCopy(${esc(JSON.stringify(senha))}, this)">📋</button>
+          onclick="doCopy(${esc(JSON.stringify(senha))}, this)">COPY</button>
       </div>
     </div>`;
 }
@@ -365,9 +555,9 @@ function pwFieldRow(senha, isDup = false) {
 export function togglePwVis(senha, btn) {
   const el = document.getElementById('pw-display');
   if (el.dataset.visible === '1') {
-    el.textContent = '••••••••'; el.dataset.visible = '0'; btn.textContent = '👁';
+    el.textContent = '••••••••'; el.dataset.visible = '0'; btn.textContent = 'SHOW';
   } else {
-    el.textContent = senha; el.dataset.visible = '1'; btn.textContent = '🙈';
+    el.textContent = senha; el.dataset.visible = '1'; btn.textContent = 'HIDE';
   }
 }
 
@@ -377,11 +567,15 @@ export function openUrl(url) { window.open(url, '_blank', 'noopener'); }
 // ── Form modal ─────────────────────────────────────────────────────
 function openFormModal(c) {
   document.getElementById('form-title-label').textContent = c ? 'Editar Credencial' : 'Nova Credencial';
-  document.getElementById('f-nome').value    = c?.nome       ?? '';
-  document.getElementById('f-url').value     = c?.url        ?? '';
-  document.getElementById('f-email').value   = c?.email      ?? '';
-  document.getElementById('f-senha').value   = c?.senha      ?? '';
-  document.getElementById('f-obs').value     = c?.observacao ?? '';
+  document.getElementById('f-nome').value     = c?.nome       ?? '';
+  document.getElementById('f-tipo').value     = c?.tipo       || 'senha';
+  document.getElementById('f-url').value      = c?.url        ?? '';
+  document.getElementById('f-email').value    = c?.email      ?? '';
+  document.getElementById('f-senha').value    = c?.senha      ?? '';
+  document.getElementById('f-ambiente').value = c?.ambiente   ?? '';
+  document.getElementById('f-expira').value   = c?.expira_em  ?? '';
+  document.getElementById('f-tags').value     = c?.tags       ?? '';
+  document.getElementById('f-obs').value      = c?.observacao ?? '';
   document.getElementById('form-overlay').classList.add('open');
   setTimeout(() => document.getElementById('f-nome').focus(), 50);
 }
@@ -417,11 +611,15 @@ export function toggleFormPwVis() {
 }
 
 export async function saveForm() {
-  const nome  = document.getElementById('f-nome').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const senha = document.getElementById('f-senha').value.trim();
-  const url   = document.getElementById('f-url').value.trim();
-  const obs   = document.getElementById('f-obs').value.trim();
+  const nome     = document.getElementById('f-nome').value.trim();
+  const tipo     = document.getElementById('f-tipo').value;
+  const email    = document.getElementById('f-email').value.trim();
+  const senha    = document.getElementById('f-senha').value.trim();
+  const url      = document.getElementById('f-url').value.trim();
+  const ambiente = document.getElementById('f-ambiente').value;
+  const expiraEm = document.getElementById('f-expira').value;
+  const tags     = document.getElementById('f-tags').value.trim();
+  const obs      = document.getElementById('f-obs').value.trim();
 
   if (!nome)  { toast('Nome do serviço é obrigatório.', 'warn'); return; }
   if (!email) { toast('E-mail é obrigatório.', 'warn'); return; }
@@ -432,13 +630,13 @@ export async function saveForm() {
 
   try {
     if (st.isNew) {
-      await adicionar({ nome, url, email, senha, observacao: obs });
+      await adicionar({ nome, url, email, senha, observacao: obs, tipo, ambiente, expira_em: expiraEm, tags });
       toast('Credencial adicionada!', 'success');
     } else {
       const prev = st.activeCred;
       await atualizar({
         nome_atual: prev.nome, email_atual: prev.email,
-        nome, url, email, senha, observacao: obs,
+        nome, url, email, senha, observacao: obs, tipo, ambiente, expira_em: expiraEm, tags,
       });
       toast('Credencial atualizada!', 'success');
     }
@@ -451,7 +649,7 @@ export async function saveForm() {
     if (e.status === 401) { onUnauthorized(); return; }
     toast('Erro ao salvar: ' + e.message, 'error');
   } finally {
-    btn.disabled = false; btn.textContent = '💾 Salvar';
+    btn.disabled = false; btn.textContent = 'Salvar';
   }
 }
 
@@ -478,7 +676,7 @@ export function regenerateKey() {
   document.getElementById('keygen-key-text').textContent = _generatedKey;
   const btn = document.getElementById('keygen-copy-btn');
   btn.classList.remove('copied');
-  btn.textContent = '📋';
+  btn.textContent = 'COPY';
 }
 
 export function copyGeneratedKey(btn) {
@@ -502,7 +700,7 @@ export async function createNewVault() {
     st.masterKey = k;
     await resetVault();
     toast('Cofre apagado. Fazendo login com a nova chave…', 'info', 3000);
-    document.getElementById('new-vault-btn').style.display = 'none';
+    document.getElementById('new-cofre-btn').style.display = 'none';
     st.freshKey = false;
     await login();
   } catch (e) {
@@ -654,14 +852,14 @@ async function checkConn() {
   try {
     await fetch('/health');
     const b = document.getElementById('conn-badge');
-    b.textContent = '● online'; b.classList.add('online');
+    b.textContent = 'online'; b.classList.add('online');
   } catch {
-    document.getElementById('conn-badge').textContent = '● offline';
+    document.getElementById('conn-badge').textContent = 'offline';
   }
 }
 
 // ── Settings Modal Tabs & Bookmarklet ──────────────────────────────
-const SETTINGS_TABS = ['appearance', 'security', 'integration'];
+const SETTINGS_TABS = ['appearance', 'security', 'alerts', 'integration'];
 
 export function switchSettingsTab(tab) {
   for (const t of SETTINGS_TABS) {
@@ -669,6 +867,9 @@ export function switchSettingsTab(tab) {
     document.getElementById(`tab-content-${t}`).style.display =
       t === tab ? (t === 'integration' ? 'flex' : 'block') : 'none';
   }
+  // Solta o foco do botão clicado para não deixar um contorno de foco
+  // preso numa aba diferente da que está com o conteúdo visível.
+  if (document.activeElement?.blur) document.activeElement.blur();
 }
 
 export function openSettingsModal() {
@@ -679,7 +880,14 @@ export function openSettingsModal() {
   document.getElementById('settings-curved').checked = getCrtCurved();
   document.getElementById('settings-theme').value = getCrtTheme();
   document.getElementById('settings-autolock').value = String(getAutoLockMinutes());
+  document.getElementById('settings-expiring-days').value = String(getExpiringAlertDays());
   switchSettingsTab('appearance');
+}
+
+export function changeExpiringDays(val) {
+  setExpiringAlertDays(Number(val));
+  updateExpiringBadge();
+  renderHealthBanner();
 }
 
 export function closeSettingsModal() {
@@ -746,7 +954,7 @@ function initBookmarklet() {
 
     div.querySelector('h3 span').onclick = () => { div.remove(); style.remove(); };
 
-    let currentMasterKey = sessionStorage.getItem('pm_vault_key');
+    let currentMasterKey = sessionStorage.getItem('pm_bookmarklet_chave');
     if (currentMasterKey) {
       div.querySelector('#pm-key-in').value = currentMasterKey;
     }
@@ -754,7 +962,7 @@ function initBookmarklet() {
     const loadCreds = async () => {
       const k = div.querySelector('#pm-key-in').value.trim();
       if (!k) return;
-      sessionStorage.setItem('pm_vault_key', k);
+      sessionStorage.setItem('pm_bookmarklet_chave', k);
       currentMasterKey = k;
 
       const term = window.location.hostname.replace(/^www\\./, '');
@@ -913,7 +1121,8 @@ function initBookmarklet() {
 Object.assign(window, {
   login, logout, toggleMasterVis,
   onSearch, onSortChange, toggleDuplicatesFilter,
-  selectCred,
+  toggleExpiringFilter, toggleWeakFilter, dismissHealthBanner,
+  selectCred, toggleFavorito, toggleTagFilter,
   startEdit, startNew, cancelForm, saveForm, toggleFormPwVis,
   togglePwVis, doCopy, openUrl,
   closeDetailModal,
@@ -929,6 +1138,7 @@ Object.assign(window, {
   toggleCurved: setCrtCurved,
   changeTheme: setCrtTheme,
   changeAutoLock,
+  changeExpiringDays,
   switchSettingsTab,
 });
 

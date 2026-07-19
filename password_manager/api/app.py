@@ -34,12 +34,20 @@ def create_app() -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def frontend() -> HTMLResponse:
-        """Serve a interface web de gestão de senhas."""
+        """Serve a interface web de gestão de senhas.
+
+        Returns:
+            HTML da página principal (index.html) do frontend.
+        """
         return HTMLResponse((_FRONTEND_DIR / "index.html").read_text(encoding="utf-8"))
 
     @app.get("/health", tags=["sistema"])
     def health() -> dict[str, str]:
-        """Verifica se a API está operacional."""
+        """Verifica se a API está operacional.
+
+        Returns:
+            Dicionário com a chave 'status' igual a 'ok'.
+        """
         return {"status": "ok"}
 
     app.include_router(router, prefix="/api")
@@ -53,7 +61,7 @@ app = create_app()
 
 
 def start() -> None:
-    """Ponto de entrada para iniciar o servidor via script pm-api."""
+    """Ponto de entrada para iniciar o servidor via script `pm`."""
     import uvicorn
 
     uvicorn.run("password_manager.api.app:app", host="127.0.0.1", port=8080)

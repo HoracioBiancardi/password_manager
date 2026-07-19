@@ -20,9 +20,18 @@ _FORMAT_VERSION = 1
 
 
 class ImportPayload(BaseModel):
+    """Payload de importação de um backup (JSON puro ou decifrado de um .enc).
+
+    Attributes:
+        version: Versão do formato de backup.
+        senhas: Lista de credenciais no mesmo formato de Credencial.to_dict().
+        notas: Reservado para uma futura funcionalidade de notas; atualmente
+            aceito no payload mas não processado por _aplicar_importacao().
+    """
+
     version: int = _FORMAT_VERSION
-    senhas: list[dict] = []
-    notas: list[dict] = []
+    senhas: list[dict[str, str | bool]] = []
+    notas: list[dict[str, str]] = []
 
 
 @router.get("/export")
@@ -35,6 +44,13 @@ def exportar(
     Args:
         criptografado: Se True, o backup é criptografado com a mesma Chave Mestre
             do cofre (necessária para reimportá-lo depois) em vez de JSON puro.
+        servico: Serviço de gerenciamento de senhas, injetado por dependência.
+
+    Returns:
+        Response com o backup como anexo para download (.json ou .enc).
+
+    Raises:
+        HTTPException: Código 401 se a Chave Mestre for inválida.
     """
     try:
         senhas = [c.to_dict() for c in servico.listar_credenciais()]
@@ -66,7 +82,18 @@ def exportar(
 
 @router.delete("/vault")
 def reset_vault(x_master_key: str = Header(...)) -> dict[str, str]:
-    """Apaga o cofre de senhas. Valida o formato da chave (sem descriptografar o vault)."""
+    """Apaga o cofre de senhas. Valida o formato da chave (sem descriptografar o vault).
+
+    Args:
+        x_master_key: Chave Mestre enviada no header X-Master-Key, usada apenas
+            para validar o formato antes de apagar o arquivo do cofre.
+
+    Returns:
+        Dicionário de confirmação com a chave 'detail'.
+
+    Raises:
+        HTTPException: Código 401 se a Chave Mestre tiver formato inválido.
+    """
     try:
         CryptoService(x_master_key)
     except ChaveMestreInvalidaError:
@@ -77,7 +104,19 @@ def reset_vault(x_master_key: str = Header(...)) -> dict[str, str]:
 
 
 def _aplicar_importacao(servico: PasswordManagerService, payload: ImportPayload) -> dict:
-    """Aplica os itens de um ImportPayload ao cofre, ignorando duplicatas já existentes."""
+    """Aplica os itens de um ImportPayload ao cofre, ignorando duplicatas já existentes.
+
+    Args:
+        servico: Serviço de gerenciamento de senhas usado para ler e gravar o cofre.
+        payload: Itens a importar (deduplica por par nome+email).
+
+    Returns:
+        Dicionário com as contagens 'senhas_importadas' e 'senhas_ignoradas'.
+
+    Raises:
+        HTTPException: Código 401 se a Chave Mestre for inválida, ou 422 se algum
+            item do payload estiver malformado.
+    """
     try:
         senhas_existentes = servico.listar_credenciais()
     except ChaveMestreInvalidaError:
@@ -109,7 +148,19 @@ def importar(
     payload: ImportPayload,
     servico: PasswordManagerService = Depends(get_servico),
 ) -> dict:
-    """Importa senhas de um backup JSON puro, ignorando duplicatas já existentes."""
+    """Importa senhas de um backup JSON puro, ignorando duplicatas já existentes.
+
+    Args:
+        payload: Backup JSON já desserializado no formato ImportPayload.
+        servico: Serviço de gerenciamento de senhas, injetado por dependência.
+
+    Returns:
+        Dicionário com as contagens 'senhas_importadas' e 'senhas_ignoradas'.
+
+    Raises:
+        HTTPException: Código 401 se a Chave Mestre for inválida, ou 422 se o
+            payload estiver malformado.
+    """
     return _aplicar_importacao(servico, payload)
 
 
@@ -122,6 +173,17 @@ async def importar_criptografado(
 
     O corpo da requisição é o payload criptografado bruto (bytes); é decifrado
     com a mesma Chave Mestre do header X-Master-Key.
+
+    Args:
+        request: Requisição HTTP cujo corpo bruto é o backup criptografado.
+        servico: Serviço de gerenciamento de senhas, injetado por dependência.
+
+    Returns:
+        Dicionário com as contagens 'senhas_importadas' e 'senhas_ignoradas'.
+
+    Raises:
+        HTTPException: Código 401 se a Chave Mestre não decifrar o backup, ou
+            422 se o backup estiver corrompido ou malformado após decifrado.
     """
     corpo = await request.body()
     try:
