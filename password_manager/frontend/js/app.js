@@ -1,7 +1,7 @@
 import { st } from './state.js';
 import { toast, copyText, downloadBlob, initBackground, esc, initial, passwordStrength, timeAgo, parseCsv } from './utils.js';
 import { listar, adicionar, atualizar, remover, exportar, importar, importarCriptografado, resetVault } from './api.js';
-import { applyPrefsOnBoot, getCrtScanlines, getCrtFlicker, getCrtTheme, getCrtStatic, getCrtCurved, setCrtScanlines, setCrtFlicker, setCrtTheme, setCrtStatic, setCrtCurved, getAutoLockMinutes, setAutoLockMinutes, getExpiringAlertDays, setExpiringAlertDays } from './prefs.js';
+import { applyPrefsOnBoot, getCrtTheme, setCrtTheme, getAutoLockMinutes, setAutoLockMinutes, getExpiringAlertDays, setExpiringAlertDays } from './prefs.js';
 
 const key = (c) => `${c.nome}::${c.email}`;
 
@@ -874,10 +874,6 @@ export function switchSettingsTab(tab) {
 
 export function openSettingsModal() {
   document.getElementById('settings-overlay').classList.add('open');
-  document.getElementById('settings-scanlines').checked = getCrtScanlines();
-  document.getElementById('settings-flicker').checked = getCrtFlicker();
-  document.getElementById('settings-static').checked = getCrtStatic();
-  document.getElementById('settings-curved').checked = getCrtCurved();
   document.getElementById('settings-theme').value = getCrtTheme();
   document.getElementById('settings-autolock').value = String(getAutoLockMinutes());
   document.getElementById('settings-expiring-days').value = String(getExpiringAlertDays());
@@ -1132,10 +1128,10 @@ Object.assign(window, {
   createNewVault,
   doImport, onImportFile,
   openSettingsModal, closeSettingsModal,
-  toggleScanlines: setCrtScanlines,
-  toggleFlicker: setCrtFlicker,
-  toggleStatic: setCrtStatic,
-  toggleCurved: setCrtCurved,
+  toggleScanlines: () => {},
+  toggleFlicker: () => {},
+  toggleStatic: () => {},
+  toggleCurved: () => {},
   changeTheme: setCrtTheme,
   changeAutoLock,
   changeExpiringDays,

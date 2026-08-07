@@ -12,11 +12,7 @@
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 
-<body class="crt-enabled flicker-enabled curved-enabled theme-green">
-  <div class="crt-overlay"></div>
-  <div class="crt-vignette"></div>
-  <div class="crt-static"></div>
-  <div class="crt-turn-on-overlay"></div>
+<body class="theme-corporate">
 
   <canvas id="bg-canvas"></canvas>
   <div class="aurora">
@@ -126,6 +122,17 @@
       <div class="brand-text">
         <span class="brand-name">PM Vault</span>
         <span class="brand-tagline">Gerenciador de Senhas</span>
+      </div>
+      <div class="brand-divider"></div>
+      <div class="brand-by" title="SwordPower">
+        <svg class="brand-by-bg" viewBox="0 0 140 26" preserveAspectRatio="none" fill="none">
+          <circle cx="7" cy="13" r="3.5" fill="#d29922" />
+          <rect x="11.5" y="10.5" width="7" height="5" rx="1.2" fill="#d29922" />
+          <rect x="19.5" y="6" width="2.6" height="14" rx="1.2" fill="#e6edf3" />
+          <path d="M22 11.5 L133 9.5 L139 13 L133 16.5 L22 14.5 Z" fill="#10b981" opacity=".9" />
+          <path d="M22 12.2 L131 10.6 L131 15.4 L22 13.8 Z" fill="#5eead4" opacity=".4" />
+        </svg>
+        <span class="brand-by-text">SwordPower</span>
       </div>
     </div>
     <div class="topbar-right">
@@ -302,33 +309,13 @@
         <!-- ── TAB APPEARANCE ── -->
         <div class="settings-tab-content" id="tab-content-appearance" style="display:block">
           <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">Aparência CRT Pip-Boy</label>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
-                <input type="checkbox" id="settings-scanlines" onchange="toggleScanlines(this.checked)">
-                <span>Ativar linhas de varredura (Scanlines CRT)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
-                <input type="checkbox" id="settings-flicker" onchange="toggleFlicker(this.checked)">
-                <span>Ativar cintilação de tela (Flicker)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
-                <input type="checkbox" id="settings-static" onchange="toggleStatic(this.checked)">
-                <span>Ativar estática/ruído de sinal (Signal Noise)</span>
-              </label>
-              <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.8125rem;">
-                <input type="checkbox" id="settings-curved" onchange="toggleCurved(this.checked)">
-                <span>Ativar tela curvada e vinheta (Curved Glass)</span>
-              </label>
-              <div style="margin-top: 0.25rem;">
-                <label for="settings-theme" style="display:block; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: .3rem;">Tema de Cor:</label>
-                <select id="settings-theme" class="form-input" style="padding: 0.4rem 0.6rem; font-size: .8rem;" onchange="changeTheme(this.value)">
-                  <option value="green">Verde Fósforo (Classic Pip-Boy)</option>
-                  <option value="amber">Âmbar Radiação (Fallout NV)</option>
-                  <option value="blue">Azul HUD (Fallout 4)</option>
-                  <option value="white">Branco Monocromático</option>
-                </select>
-              </div>
+            <label class="form-label">Aparência da Interface</label>
+            <div style="margin-top: 0.5rem;">
+              <label for="settings-theme" style="display:block; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: .3rem;">Tema de Cor:</label>
+              <select id="settings-theme" class="form-input" style="padding: 0.4rem 0.6rem; font-size: .8rem;" onchange="changeTheme(this.value)">
+                <option value="corporate">Corporativo (Padrão)</option>
+                <option value="green-neutral">Verde Escuro Neutro</option>
+              </select>
             </div>
           </div>
         </div>

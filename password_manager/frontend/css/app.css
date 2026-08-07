@@ -207,16 +207,31 @@ input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px
   border-color: rgba(248,81,73,.45);
 }
 
-/* ── Banner de credenciais expirando ─────────────────────────────── */
+/* ── Banner de alertas do cofre (saúde / expiração) ─────────────────── */
 .banner-alert {
-  font-size: .72rem; color: var(--warn);
-  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.2);
-  border-bottom: 1px solid var(--border);
-  padding: .5rem 1.25rem;
+  font-size: .78rem; font-weight: 500;
+  color: var(--warn);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--r-md);
+  margin: .75rem 1.25rem 0;
+  padding: .55rem 1rem;
   display: flex; align-items: center; justify-content: space-between; gap: .75rem;
   flex-shrink: 0; cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: background var(--t), border-color var(--t), box-shadow var(--t);
 }
-.banner-alert:hover { background: rgba(210,153,34,.14); }
+.banner-alert::before {
+  content: '⚠️';
+  font-size: .85rem;
+  margin-right: .35rem;
+  flex-shrink: 0;
+}
+.banner-alert:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+}
 
 /* ── Contagem de registros ───────────────────────────────────────── */
 .count-badge {
