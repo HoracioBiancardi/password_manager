@@ -54,16 +54,13 @@
           <input type="checkbox" id="remember-key-checkbox" style="width: auto;">
           <span>Lembrar Chave neste dispositivo</span>
         </label>
+        <p class="form-hint" style="margin-top:.3rem">⚠️ Fica salva em texto simples no navegador (localStorage). Não use em computadores compartilhados.</p>
       </div>
 
       <div class="modal-footer" style="padding-top:.25rem;flex-direction:column;gap:.6rem">
         <button class="btn btn-primary" id="login-btn" onclick="login()"
           style="width:100%;justify-content:center;padding:.65rem">
           Desbloquear
-        </button>
-        <button class="btn btn-ghost" onclick="openKeyGenModal()"
-          style="width:100%;justify-content:center;font-size:.78rem">
-          Gerar nova Chave Mestre
         </button>
         <button class="btn btn-ghost" onclick="openSettingsModal()"
           style="width:100%;justify-content:center;font-size:.78rem">
@@ -73,38 +70,6 @@
           style="display:none">
           Criar cofre vazio (apaga todos os dados)
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── KEYGEN MODAL ────────────────────────────────────────────────── -->
-  <div class="overlay" id="keygen-overlay">
-    <div class="modal glass" style="max-width:480px">
-      <div class="modal-header">
-        <h2>Nova Chave Mestre</h2>
-        <button class="close-btn" onclick="closeKeyGenModal()">X</button>
-      </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:.9rem">
-        <p class="form-hint" style="opacity:1">
-          Uma nova chave Fernet foi gerada. Guarde-a em local seguro —
-          sem ela suas senhas não poderão ser recuperadas.
-        </p>
-        <div class="keygen-key-box">
-          <code id="keygen-key-text"></code>
-          <button class="copy-btn" id="keygen-copy-btn" onclick="copyGeneratedKey(this)"
-            title="Copiar chave">COPY</button>
-        </div>
-        <p class="keygen-warning">Esta chave não é armazenada em lugar nenhum. Copie agora.</p>
-        <p class="keygen-warning"
-          style="color:#f87171;border-color:rgba(248,113,113,.18);background:rgba(248,113,113,.07)">
-          Chave nova = cofre novo. Se você já tem um <code style="font-size:.7rem">senhas.enc</code>,
-          ele continuará cifrado com a chave anterior. Use a chave nova apenas para um cofre vazio ou após exportar seus
-          dados.
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="regenerateKey()">Gerar outra</button>
-        <button class="btn btn-primary" onclick="useGeneratedKey()">Usar esta chave</button>
       </div>
     </div>
   </div>
@@ -366,6 +331,7 @@
               Preencher com PM Vault
             </a>
             <p style="font-size:.64rem;color:var(--text-muted);margin-top:.5rem;line-height:1.4">Alguns sites (ex: GitHub, Google, redes sociais, bancos) bloqueiam favoritos de script por política de segurança (CSP) e o painel não abrirá. Nesses casos, use a Extensão de Navegador abaixo.</p>
+            <div style="margin-top:.5rem;padding:.4rem .6rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--r-sm);font-size:.65rem;color:var(--warn)">⚠️ <strong>Aviso de Segurança:</strong> O Bookmarklet usa a Chave Mestre em memória na aba do site acessado. Ative apenas em sites confiáveis e feche o painel ao terminar.</div>
           </div>
 
           <div style="border:1px dashed var(--border);padding:.6rem;border-radius:var(--r-md);background:var(--surface-alt)">

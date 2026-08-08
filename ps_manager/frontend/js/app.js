@@ -629,13 +629,13 @@ export async function saveForm() {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
 
   try {
-    if (st.isNew) {
+    if (st.isNew || !st.activeCred) {
       await adicionar({ nome, url, email, senha, observacao: obs, tipo, ambiente, expira_em: expiraEm, tags });
       toast('Credencial adicionada!', 'success');
     } else {
       const prev = st.activeCred;
       await atualizar({
-        nome_atual: prev.nome, email_atual: prev.email,
+        nome_atual: prev?.nome || nome, email_atual: prev?.email || email,
         nome, url, email, senha, observacao: obs, tipo, ambiente, expira_em: expiraEm, tags,
       });
       toast('Credencial atualizada!', 'success');
@@ -653,44 +653,6 @@ export async function saveForm() {
   }
 }
 
-// ── Gerar chave Fernet ─────────────────────────────────────────────
-let _generatedKey = null;
-
-function _makeFernetKey() {
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_');
-}
-
-export function openKeyGenModal() {
-  _generatedKey = _makeFernetKey();
-  document.getElementById('keygen-key-text').textContent = _generatedKey;
-  document.getElementById('keygen-overlay').classList.add('open');
-}
-
-export function closeKeyGenModal() {
-  document.getElementById('keygen-overlay').classList.remove('open');
-}
-
-export function regenerateKey() {
-  _generatedKey = _makeFernetKey();
-  document.getElementById('keygen-key-text').textContent = _generatedKey;
-  const btn = document.getElementById('keygen-copy-btn');
-  btn.classList.remove('copied');
-  btn.textContent = 'COPY';
-}
-
-export function copyGeneratedKey(btn) {
-  copyText(_generatedKey, btn);
-}
-
-export function useGeneratedKey() {
-  document.getElementById('master-key-input').value = _generatedKey;
-  st.freshKey = true;
-  closeKeyGenModal();
-  toast('Chave aplicada no campo. Guarde-a antes de continuar!', 'warn', 5000);
-  document.getElementById('master-key-input').focus();
-}
-
 // ── Criar cofre vazio com nova chave ──────────────────────────────
 export async function createNewVault() {
   if (!confirm('Isso vai APAGAR permanentemente todas as senhas do cofre atual. Confirmar?')) return;
@@ -698,7 +660,7 @@ export async function createNewVault() {
   if (!k) { toast('Digite a Chave Mestre no campo.', 'warn'); return; }
   try {
     st.masterKey = k;
-    await resetVault();
+    await resetVault(true);
     toast('Cofre apagado. Fazendo login com a nova chave…', 'info', 3000);
     document.getElementById('new-cofre-btn').style.display = 'none';
     st.freshKey = false;
@@ -1124,7 +1086,6 @@ Object.assign(window, {
   closeDetailModal,
   openDeleteModal, closeDeleteModal, confirmDelete,
   doExport, doExportEncrypted,
-  openKeyGenModal, closeKeyGenModal, regenerateKey, copyGeneratedKey, useGeneratedKey,
   createNewVault,
   doImport, onImportFile,
   openSettingsModal, closeSettingsModal,

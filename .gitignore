@@ -1,24 +1,10 @@
-# Dados sensíveis — nunca versionar
-.password-manager/
 *.enc
-
-# Ambiente virtual
-.venv/
-
-# Python
+.password-manager/
+senhas.enc
+.env
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
+.venv/
 dist/
 build/
-
-# uv
-.uv/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
+*.egg-info/

@@ -12,7 +12,11 @@ export async function apiFetch(path, opts = {}) {
     ...opts,
   });
 
-  if (r.status === 401) throw Object.assign(new Error('Chave Mestre inválida.'), { status: 401 });
+  if (r.status === 401) throw Object.assign(new Error('Chave Mestre inválida ou expirada.'), { status: 401 });
+  if (r.status === 429) {
+    const errData = await r.json().catch(() => ({ detail: 'Muitas tentativas.' }));
+    throw Object.assign(new Error(errData.detail || 'Muitas tentativas. Bloqueio temporário.'), { status: 429 });
+  }
   if (!r.ok) {
     const err = await r.json().catch(() => ({ detail: r.statusText }));
     throw new Error(err.detail || 'Erro na API');
@@ -36,24 +40,29 @@ export async function adicionar(payload) {
 }
 
 export async function atualizar(payload) {
-  const r = await apiFetch('/credenciais/', { method: 'PATCH', body: JSON.stringify(payload) });
+  const nomeKey = payload.nome_atual || payload.nome;
+  const emailKey = payload.email_atual || payload.email;
+  const key_str = `${nomeKey}::${emailKey}`;
+  const r = await apiFetch(`/credenciais/${encodeURIComponent(key_str)}`, { method: 'PUT', body: JSON.stringify(payload) });
   return r.json();
 }
 
 export async function remover(nome, email) {
-  await apiFetch(`/credenciais/?nome=${encodeURIComponent(nome)}&email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+  const key_str = `${nome}::${email}`;
+  await apiFetch(`/credenciais/${encodeURIComponent(key_str)}`, { method: 'DELETE' });
 }
 
 export async function exportar(criptografado = false) {
-  const r = await apiFetch(`/io/export${criptografado ? '?criptografado=true' : ''}`);
+  const endpoint = criptografado ? '/cofre/exportar-criptografado' : '/cofre/exportar';
+  const r = await apiFetch(endpoint);
   const blob = await r.blob();
   const cd = r.headers.get('Content-Disposition') || '';
-  const fn = cd.match(/filename="([^"]+)"/)?.[1] || (criptografado ? 'pm-backup.enc' : 'pm-backup.json');
+  const fn = cd.match(/filename="([^"]+)"/)?.[1] || (criptografado ? 'senhas.enc' : 'senhas.json');
   return { blob, filename: fn };
 }
 
 export async function importar(payload) {
-  const r = await apiFetch('/io/import', {
+  const r = await apiFetch('/cofre/importar', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -61,7 +70,7 @@ export async function importar(payload) {
 }
 
 export async function importarCriptografado(arrayBuffer) {
-  const r = await apiFetch('/io/import-encrypted', {
+  const r = await apiFetch('/cofre/importar-criptografado', {
     method: 'POST',
     headers: { 'Content-Type': 'application/octet-stream' },
     body: arrayBuffer,
@@ -69,6 +78,6 @@ export async function importarCriptografado(arrayBuffer) {
   return r.json();
 }
 
-export async function resetVault() {
-  await apiFetch('/io/vault', { method: 'DELETE' });
+export async function resetVault(force = false) {
+  await apiFetch(`/cofre/reset${force ? '?force=true' : ''}`, { method: 'DELETE' });
 }
