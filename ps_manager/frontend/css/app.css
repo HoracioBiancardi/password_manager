@@ -244,3 +244,13 @@ input[type="checkbox"] { accent-color: var(--primary); width: 14px; height: 14px
   width: auto; max-width: 220px;
   padding: .38rem .9rem; font-size: .8rem;
 }
+
+/* Removendo setas nativas feias de input[type=number] para adequação total ao tema */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

@@ -1077,7 +1077,10 @@ function initBookmarklet() {
 
 // ── Expor ao DOM ───────────────────────────────────────────────────
 Object.assign(window, {
+  toast,
+  showToast: toast,
   login, logout, toggleMasterVis,
+
   onSearch, onSortChange, toggleDuplicatesFilter,
   toggleExpiringFilter, toggleWeakFilter, dismissHealthBanner,
   selectCred, toggleFavorito, toggleTagFilter,

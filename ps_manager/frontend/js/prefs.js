@@ -6,8 +6,10 @@ const EXPIRING_DAYS_KEY = 'pm-expiring-alert-days';
 
 const VALID_THEMES = new Set([
   'corporate',
-  'green-neutral'
+  'green-neutral',
+  'cyber-dark'
 ]);
+
 
 export function getCrtTheme() {
   const saved = localStorage.getItem(THEME_KEY);
