@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from ps_manager.config import get_settings
+from password_manager.config import get_settings
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 

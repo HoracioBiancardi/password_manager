@@ -2,13 +2,13 @@ from __future__ import annotations
 from typing import Annotated
 from urllib.parse import unquote
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from ps_manager.dependencies import get_vault_service
-from ps_manager.models.schemas import (
+from password_manager.dependencies import get_vault_service
+from password_manager.models.schemas import (
     CredentialCreateRequest,
     CredentialResponse,
     CredentialUpdateRequest,
 )
-from ps_manager.services.vault_service import VaultService
+from password_manager.services.vault_service import VaultService
 
 router = APIRouter(prefix="/api/credenciais", tags=["credenciais"])
 

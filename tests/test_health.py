@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from ps_manager.main import app
+from password_manager.main import app
 
 client = TestClient(app)
 

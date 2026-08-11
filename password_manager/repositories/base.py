@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from ps_manager.domain.entities import Credential, VaultData
+from password_manager.domain.entities import Credential, VaultData
 
 class AbstractVaultRepository(ABC):
     @abstractmethod

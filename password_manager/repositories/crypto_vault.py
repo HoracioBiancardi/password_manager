@@ -6,8 +6,8 @@ from pathlib import Path
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
-from ps_manager.domain.entities import Credential, VaultData
-from ps_manager.repositories.base import AbstractVaultRepository
+from password_manager.domain.entities import Credential, VaultData
+from password_manager.repositories.base import AbstractVaultRepository
 
 SALT_PREFIX = b"SALT_PBKDF2_V1:"
 SALT_LEN = 16

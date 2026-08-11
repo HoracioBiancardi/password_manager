@@ -12,10 +12,10 @@ O **Password Manager** é o gerenciador de senhas e cofre seguro de credenciais 
 cd /home/swordpower/Documentos/REPO/PESSOAL/password_manager
 
 # Executar o Servidor de Desenvolvimento via uv run (Recomendado)
-uv run uvicorn ps_manager.main:app --reload --port 8003
+uv run uvicorn password_manager.main:app --reload --port 8003
 
 # Alternativa direta com python
-python3 -m uvicorn ps_manager.main:app --reload --port 8003
+python3 -m uvicorn password_manager.main:app --reload --port 8003
 
 # Executar a Suíte Completa de Testes Automatizados (Pytest)
 uv run pytest -v
@@ -32,6 +32,12 @@ uv run pytest -v
 - **`task_runner_service.py`**: Executor de rotinas assíncronas em segundo plano.
 - **`log_buffer_service.py`**: Console de logs de auditoria em memória.
 - **`notification_service.py`**: Despachante de alertas para webhooks.
+- **`log_buffer_service.py`** tem `LogBufferHandler` anexado ao logger raiz para captura automática de `logging.getLogger(__name__)` de qualquer módulo.
+
+### Rotas de sistema (paridade com o app_template, só backend — sem UI própria)
+- `GET /api/system/health`, `/metrics`, `/logs`, `POST /logs/clear`.
+- `POST /api/vault/encrypt`, `/decrypt`, `/generate-password` (router `vault_tools.py` — não confundir com o router de domínio `vault.py`, que expõe `/api/cofre` e `/api/io`).
+- `POST /api/tasks/start-demo`, `GET /list`, `GET /{task_id}`, `POST /{task_id}/cancel`.
 
 ---
 

@@ -1,11 +1,13 @@
+import logging
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from ps_manager.config import get_settings
-from ps_manager.routers import credentials, vault, settings as settings_router
+from password_manager.config import get_settings
+from password_manager.routers import credentials, vault, settings as settings_router, system, vault_tools, tasks
+from password_manager.services.log_buffer_service import log_buffer_service
 
 def create_app() -> FastAPI:
     s = get_settings()
@@ -25,9 +27,15 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Captura logging padrão (logging.getLogger(__name__)) no buffer de logs da UI
+    logging.getLogger().addHandler(log_buffer_service.get_handler())
+
     app.include_router(credentials.router)
     app.include_router(vault.router)
     app.include_router(settings_router.router)
+    app.include_router(system.router)
+    app.include_router(vault_tools.router)
+    app.include_router(tasks.router)
 
     @app.get("/health")
     def health():
@@ -46,7 +54,7 @@ app = create_app()
 
 def start():
     s = get_settings()
-    uvicorn.run("ps_manager.main:app", host=s.host, port=s.port, reload=s.debug)
+    uvicorn.run("password_manager.main:app", host=s.host, port=s.port, reload=s.debug)
 
 if __name__ == "__main__":
     start()

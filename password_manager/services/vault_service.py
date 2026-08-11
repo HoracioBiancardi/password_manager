@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from ps_manager.domain.entities import Credential, VaultData
-from ps_manager.repositories.base import AbstractVaultRepository
+from password_manager.domain.entities import Credential, VaultData
+from password_manager.repositories.base import AbstractVaultRepository
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()

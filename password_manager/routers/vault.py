@@ -2,16 +2,16 @@ from __future__ import annotations
 import json
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import Response
-from ps_manager.config import get_settings
-from ps_manager.dependencies import get_vault_service
-from ps_manager.domain.entities import Credential, VaultData
-from ps_manager.models.schemas import (
+from password_manager.config import get_settings
+from password_manager.dependencies import get_vault_service
+from password_manager.domain.entities import Credential, VaultData
+from password_manager.models.schemas import (
     VaultExportResponse,
     VaultImportPayload,
     VaultImportResponse,
 )
-from ps_manager.routers.credentials import get_master_key
-from ps_manager.services.vault_service import VaultService
+from password_manager.routers.credentials import get_master_key
+from password_manager.services.vault_service import VaultService
 
 router = APIRouter(tags=["cofre"])
 
@@ -77,7 +77,7 @@ async def importar_criptografado(
         import os
         import tempfile
         from pathlib import Path
-        from ps_manager.repositories.crypto_vault import CryptoVaultRepository
+        from password_manager.repositories.crypto_vault import CryptoVaultRepository
 
         with tempfile.NamedTemporaryFile(suffix=".enc", delete=False) as tmp:
             tmp_path = Path(tmp.name)

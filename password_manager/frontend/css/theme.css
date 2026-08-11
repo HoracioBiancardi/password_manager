@@ -125,6 +125,34 @@ body.theme-green-neutral {
   --info:            #00d2ff;
 }
 
+/* Theme Cyber Dark (Neon Violet) */
+body.theme-cyber-dark {
+  --bg:              #080914;
+  --surface:         #0f1123;
+  --surface-alt:     #171936;
+  --surface-hover:   #21244d;
+
+  --border:          #282c5e;
+  --border-muted:    #171936;
+  --border-bright:   #404694;
+
+  --primary:         #8b5cf6;
+  --primary-hover:   #a78bfa;
+  --primary-dim:     rgba(139, 92, 246, 0.15);
+  --primary-glow:    rgba(139, 92, 246, 0.25);
+  --glow-ring:       0 0 0 3px rgba(139, 92, 246, 0.25);
+
+  --text:            #f3f4f6;
+  --text-muted:      #9ca3af;
+  --text-subtle:     #6b7280;
+
+  --success:         #06b6d4;
+  --warn:            #f59e0b;
+  --danger:          #ec4899;
+  --danger-dim:      rgba(236, 72, 153, 0.12);
+  --info:            #3b82f6;
+}
+
 /* Theme Green Phosphor (Retido para tema-green-neutral se necessário) */
 body.theme-green-neutral input, body.theme-green-neutral textarea, body.theme-green-neutral select, body.theme-green-neutral button, body.theme-green-neutral kbd, body.theme-green-neutral span:not(.brand-by-text), body.theme-green-neutral div:not(.brand-by), body.theme-green-neutral p, body.theme-green-neutral h1, body.theme-green-neutral h2, body.theme-green-neutral h3, body.theme-green-neutral h4, body.theme-green-neutral h5, body.theme-green-neutral h6, body.theme-green-neutral a, body.theme-green-neutral li, body.theme-green-neutral td, body.theme-green-neutral th, body.theme-green-neutral pre, body.theme-green-neutral code {
   font-family: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', monospace !important;
